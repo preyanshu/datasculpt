@@ -1,101 +1,148 @@
-import Image from "next/image";
+// "use client";
+// import { motion } from "framer-motion";
+// import Link from "next/link";
+// import { HeroHighlight, Highlight } from "@/components/ui/hero-highlight";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+// function Page() {
+//   return (
+//     <HeroHighlight className="min-h-screen flex justify-center items-center">
+//       {/* Left Side: Text and Buttons */}
+//       <div className="flex-[3] flex flex-col justify-center items-start text-center max-w-3xl">
+//         {/* Tagline Animation */}
+//         <motion.h1
+//           initial={{
+//             opacity: 0,
+//             y: 20,
+//           }}
+//           animate={{
+//             opacity: 1,
+//             y: [20, -5, 0],
+//           }}
+//           transition={{
+//             duration: 0.5,
+//             ease: [0.4, 0.0, 0.2, 1],
+//           }}
+//           className="text-2xl px-4 md:text-4xl lg:text-5xl font-bold text-neutral-700 dark:text-white leading-relaxed lg:leading-snug"
+//         >
+//           <span className="mt-6">
+//             Helping you get your dataset <br />{" "}
+//           </span>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+//           <Highlight className="text-black dark:text-white mt-3">
+//             prepared with ease.
+//           </Highlight>
+//         </motion.h1>
+
+//         {/* Buttons for navigation */}
+//         <div className="mt-10 flex gap-4 items-center justify-center w-full -ml-10">
+//           {/* Creator Dashboard Button */}
+//           <Link href="/creators/tasks">
+//             <motion.button
+//               whileHover={{ scale: 1.05 }}
+//               whileTap={{ scale: 0.95 }}
+//               className="bg-black text-white px-6 py-3 rounded-lg shadow-lg font-semibold border-white border-2"
+//             >
+//               Creator Dashboard
+//             </motion.button>
+//           </Link>
+
+//           {/* Worker Dashboard Button */}
+//           <Link href="/worker/tasks">
+//             <motion.button
+//               whileHover={{ scale: 1.05 }}
+//               whileTap={{ scale: 0.95 }}
+//               className="bg-white text-black px-6 py-3 rounded-lg shadow-lg font-semibold"
+//             >
+//               Worker Dashboard
+//             </motion.button>
+//           </Link>
+//         </div>
+//       </div>
+
+//       {/* Right Side: Animation */}
+//       <div className="flex-[1] -ml-20 w-[400px]">
+//         <dotlottie-player
+//           src="https://lottie.host/b05c7036-faf5-4212-9e3d-a6178c82ec02/QbVm9VqpRb.json"
+//           background="transparent"
+//           speed="1"
+//           style={{ width: "100%" }}
+//           loop
+//           autoplay
+//         ></dotlottie-player>
+//       </div>
+//     </HeroHighlight>
+//   );
+// }
+
+// export default Page;
+
+"use client";
+import React from "react";
+import { HeroParallax } from "@/components/ui/hero-parallax";
+
+function HeroParallaxDemo() {
+  return <HeroParallax products={products} />;
 }
+
+export default HeroParallaxDemo;
+
+export const products = [
+
+  {
+    title: "Editorially",
+    link: "https://editorially.org",
+    thumbnail:
+      "https://aceternity.com/images/products/thumbnails/new/editorially.png",
+  },
+  {
+    title: "Editrix AI",
+    link: "https://editrix.ai",
+    thumbnail:
+      "https://aceternity.com/images/products/thumbnails/new/editrix.png",
+  },
+  {
+    title: "Pixel Perfect",
+    link: "https://app.pixelperfect.quest",
+    thumbnail:
+      "https://aceternity.com/images/products/thumbnails/new/pixelperfect.png",
+  },
+
+  {
+    title: "Algochurn",
+    link: "https://algochurn.com",
+    thumbnail:
+      "https://aceternity.com/images/products/thumbnails/new/algochurn.png",
+  },
+  {
+    title: "Aceternity UI",
+    link: "https://ui.aceternity.com",
+    thumbnail:
+      "https://aceternity.com/images/products/thumbnails/new/aceternityui.png",
+  },
+  {
+    title: "Tailwind Master Kit",
+    link: "https://tailwindmasterkit.com",
+    thumbnail:
+      "https://aceternity.com/images/products/thumbnails/new/tailwindmasterkit.png",
+  },
+  {
+    title: "SmartBridge",
+    link: "https://smartbridgetech.com",
+    thumbnail:
+      "https://aceternity.com/images/products/thumbnails/new/smartbridge.png",
+  },
+  {
+    title: "Renderwork Studio",
+    link: "https://renderwork.studio",
+    thumbnail:
+      "https://aceternity.com/images/products/thumbnails/new/renderwork.png",
+  },
+
+  {
+    title: "Creme Digital",
+    link: "https://cremedigital.com",
+    thumbnail:
+      "https://aceternity.com/images/products/thumbnails/new/cremedigital.png",
+  }
+
+];
