@@ -16,10 +16,11 @@ const { toast } = useToast()
         network: Network.DEVNET,
       }}
       onError={(error) => {
+        console.log(error)
         toast({
           variant: "destructive",
           title: "Error",
-          description: error || "Unknown wallet error",
+          description: "Unknown wallet error",
         });
       }}
     >

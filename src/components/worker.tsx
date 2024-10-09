@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Carousel,
@@ -17,7 +17,9 @@ import {
 import Register from "./Register";
 import { useToast } from "./ui/use-toast";
 import AOS from "aos";
-import { h1, span } from "framer-motion/client";
+import { data, filter, h1, span } from "framer-motion/client";
+import { log } from "console";
+import { parse, stringify } from "querystring";
 
 const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const client = new AptosClient(NODE_URL);
@@ -53,6 +55,22 @@ const convertStructure = (oldData) => {
   );
 };
 
+const saveJobTaskIndex = (walletAddress: string, job_start: number, task_start: number) => {
+  const data = {
+    job_start,
+    task_start,
+  };
+
+
+  localStorage.setItem(walletAddress, JSON.stringify(data));
+};
+
+const getJobTaskIndex = (walletAddress: string) => {
+  const data = localStorage.getItem(walletAddress);
+  return data ? JSON.parse(data) : { job_start: 0, task_start: 0 }; 
+};
+
+
 const Dashboard = () => {
   useEffect(() => {
     AOS.init({ duration: 300 });
@@ -65,82 +83,121 @@ const Dashboard = () => {
   const handleOpen = () => setOpen(true);
   const { toast } = useToast();
 
-  const getJobs = async () => {
-    if (!account) return [];
-    setLoading(true);
-    try {
-      const jobResource = await client.getAccountResource(
-        "0x1dc03758f2c3a17cec451cfef4b7f50fd530c10400731aa2c22abcde7b678bd6",
-        `${moduleAddress}::job_management::JobManagement`
-      );
+  
+const currentJobIndexRef = useRef(0);  
+const currentTaskIndexRef = useRef(0); 
 
-      const jobHandle = (jobResource as any).data.jobs.handle;
-      const jobCounter = (jobResource as any).data.job_counter;
+// Main function to fetch jobs and tasks
+const getJobs = async (taskBatchSize = 10) => {
+  if (!account) return [];
+  setLoading(true);
 
-      if (jobCounter === 0) {
-        setJobs([]); // No jobs, so early return
-        return;
-      }
+  try {
+    const jobResource = await client.getAccountResource(
+      "0x1dc03758f2c3a17cec451cfef4b7f50fd530c10400731aa2c22abcde7b678bd6",
+      `${moduleAddress}::job_management::JobManagement`
+    );
 
-      // Create an array of job fetch promises
-      const jobFetchPromises = Array.from(
-        { length: jobCounter },
+    const jobHandle = (jobResource as any).data.jobs.handle;
+    const jobCounter = (jobResource as any).data.job_counter;
+
+    if (jobCounter === 0) {
+      setJobs([]); 
+      return;
+    }
+
+    let totalFetchedTasks = 0;
+    let allJobs = [];
+
+    // Get saved job/task index from localStorage
+    const { job_start, task_start } = getJobTaskIndex(creatorData?.wallet_address);
+
+    let jobIndex = job_start > currentJobIndexRef.current ? job_start : currentJobIndexRef.current;  // Get current job index from ref
+    let taskIndex = task_start > currentTaskIndexRef.current ? task_start : currentTaskIndexRef.current;  // Get current task index from ref
+
+    let ans = [];
+
+    // Continue fetching tasks until we meet the batch size and filter tasks
+    while (jobIndex < jobCounter && totalFetchedTasks < taskBatchSize && ans.length === 0) {
+      const tableItem = {
+        key_type: "u64",
+        value_type: `${moduleAddress}::job_management::Job`,
+        key: `${jobIndex + 1}`,
+      };
+      const job = await client.getTableItem(jobHandle, tableItem);
+
+      const taskHandle = job.tasks.handle;
+      const taskCounter = job.task_counter;
+
+      // Calculate the number of tasks to fetch from this job
+      const remainingTasksInJob = taskCounter - taskIndex;
+      const tasksToFetch = Math.min(remainingTasksInJob, taskBatchSize - totalFetchedTasks);
+
+      // Fetch tasks starting from the last fetched task index
+      const taskFetchPromises = Array.from(
+        { length: tasksToFetch },
         (_, index) => {
-          const tableItem = {
+          const taskItem = {
             key_type: "u64",
-            value_type: `${moduleAddress}::job_management::Job`,
-            key: `${index + 1}`,
+            value_type: `${moduleAddress}::job_management::Task`,
+            key: `${taskIndex + index + 1}`,
           };
-          return client.getTableItem(jobHandle, tableItem);
+          return client.getTableItem(taskHandle, taskItem);
         }
       );
 
-      // Fetch all jobs concurrently
-      const jobs = await Promise.all(jobFetchPromises);
-      // console.log(jobs);
-      // Fetch tasks for each job concurrently
-      const jobTaskFetchPromises = jobs.map(async (job) => {
-        const taskHandle = job.tasks.handle;
-        const taskCounter = job.task_counter;
+      const tasks = await Promise.all(taskFetchPromises);
+      totalFetchedTasks += tasks.length;
 
-        // Create an array of task fetch promises for each job
-        const taskFetchPromises = Array.from(
-          { length: taskCounter },
-          (_, index) => {
-            const tableItem = {
-              key_type: "u64",
-              value_type: `${moduleAddress}::job_management::Task`,
-              key: `${index + 1}`,
-            };
-            return client.getTableItem(taskHandle, tableItem);
-          }
-        );
-
-        // Fetch all tasks for the job concurrently
-        const tasks = await Promise.all(taskFetchPromises);
-
-        // Return a new job with tasks
-        return {
-          creator: job.creator,
-          jobId: job.job_id,
-          taskCounter: job.task_counter,
-          tasks: tasks,
-          amount: job.amount,
-        };
+      // Push job data with tasks into allJobs array
+      allJobs.push({
+        creator: job.creator,
+        jobId: job.job_id,
+        taskCounter: job.task_counter,
+        tasks: tasks,
+        amount: job.amount,
       });
 
-      // Resolve all job and task fetch promises
-      const newJobs = await Promise.all(jobTaskFetchPromises);
-      // console.log(newJobs);
-      // Set the jobs in state
-      setJobs(newJobs);
-      console.log("newjobs",newJobs)
-      setLoading(false);
-    } catch (error) {
-      console.error(error);
-      setLoading(false);
+      // Filter tasks based on the condition
+
+      ans = allJobs
+        .flatMap((job) => job.tasks)
+        .filter((task) => 
+          !(task?.picked_by?.includes(account?.address)) && !(task.completed)
+        );
+
+      // If no valid tasks found, fetch from the next job
+      taskIndex += tasksToFetch;
+      if (taskIndex >= taskCounter) {
+        jobIndex++;  // Move to the next job
+        taskIndex = 0;  // Reset task index for the new job
+      }
+      
+      currentJobIndexRef.current = jobIndex;  // Update the current job index in the ref
+      currentTaskIndexRef.current = taskIndex;  // Update the current task index in the ref
+      // Save the job and task index in local storage if there are no tasks to process
+      if (ans.length === 0) {
+        saveJobTaskIndex(account?.address, jobIndex, taskIndex);
+      }
     }
-  };
+
+    // If there are filtered tasks, append the fetched jobs
+    if (ans.length > 0) {
+      setJobs((prevJobs : Array<any>) => [...allJobs]);
+    }
+      console.log(ans, "ans");
+      console.log("Fetched jobs and tasks:", allJobs);
+      console.log(jobIndex, taskIndex, job_start, task_start, "jobIndex, taskIndex");
+    setLoading(false);
+
+  } catch (error) {
+    console.error(error);
+    setLoading(false);
+  }
+};
+
+
+
   const getUserProfile = async (address: string | undefined) => {
     if (!address) {
       console.log("Address is not valid");
@@ -162,6 +219,10 @@ const Dashboard = () => {
       setLoading(false);
       return null;
     }
+  };
+
+  const fetchNextBatch = (numberOfTasks : number) => {
+    getJobs(numberOfTasks);  // Fetch the next batch of tasks
   };
 
   useEffect(() => {
@@ -380,12 +441,13 @@ const Dashboard = () => {
                 </CarouselItem>
 
                 {console.log(questions, "questions")}
-                {console.log(currentAddress, "currentAddress")}
+                {/* {console.log(currentAddress, "currentAddress")} */}
                 
                 {/* Questions Carousel Items */}
                 {questions
-                  .filter((e) => ((!(e?.pickedBy?.includes(currentAddress)) && !(e?.isCompleted))))
+                  .filter((e) => ((!(e?.pickedBy?.includes(account?.address)) && !(e?.isCompleted))))
                   .map((questionObj, questionIndex: number) => (
+
                     <CarouselItem key={questionIndex}>
                       <div className="p-1">
                         <Card className="border-none rounded-lg">
@@ -397,6 +459,7 @@ const Dashboard = () => {
                                 
                                 {/* {JSON.stringify(questionObj.isCompleted)} */}
                                 {String(questionObj?.isCompleted)}
+                                {String(questionObj?.pickedBy?.includes(account?.address))}
                                   Q{questionIndex + 1}:{" "}
                                   {questionObj.question.question}
                                 </label>
@@ -508,7 +571,7 @@ const Dashboard = () => {
                           </p>
                           <button
                             className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                            onClick={handleRefresh}
+                            onClick={() => {fetchNextBatch(10)}}
                           >
                             Refresh
                           </button>
