@@ -66,7 +66,7 @@ export default function ExpandableCard({ jobs }: ExpandableCardProps) {
         {active && (
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            animate={{ opacity: 0 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 h-full w-full z-10"
           />
@@ -184,7 +184,8 @@ export default function ExpandableCard({ jobs }: ExpandableCardProps) {
             layoutId={`card-${job.title}-${id}`}
             key={`card-${job.title}-${id}`}
             onClick={() => setActive(job)}
-            className="p-4 flex flex-col md:flex-row justify-between items-center hover:bg-neutral-50 dark:hover:bg-neutral-700 rounded-xl cursor-pointer shadow hover:shadow-md transition-shadow duration-200"
+            className="p-4 flex flex-col md:flex-row justify-between items-center hover:bg-neutral-50 dark:hover:bg-neutral-700 rounded-xl cursor-pointer shadow hover:shadow-md transition-shadow duration-200
+            mb-30"
           >
             <div className="flex gap-4 flex-col md:flex-row">
               <div>

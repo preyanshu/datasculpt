@@ -155,8 +155,9 @@ const Dashboard = () => {
         if(res === null)handleOpen();
       });
     }
-    if(jobs.length === 0)
+    if(jobs.length === 0){
       getJobs();
+    }
   }, [account, connected])
 
   useEffect(() => {
@@ -188,20 +189,26 @@ const Dashboard = () => {
     {
       title: "Pending Jobs",
       value: "pending",
-      content: (
+      content: (<>
         <div
           className="w-full overflow-hidden relative h-[600px] rounded-2xl p-10 text-white bg-neutral-800"
           style={{ marginTop: "-100px" }}
         >
           {pendingJobs.length > 0 ? (
-            <ul className="space-y-4">
+            <ul className="space-y-4 ">
               <ExpandableCard jobs={pendingJobs} />
             </ul>
+
+
           ) : (
             <p className="text-neutral-600 dark:text-neutral-300">No pending jobs found.</p>
           )}
         </div>
-      ),
+
+       <div className="h-[40px]">
+
+       </div>
+      </>),
     },
     {
       title: "Completed Jobs",
@@ -294,7 +301,7 @@ const Dashboard = () => {
       </div>
 
       {/* Tabs */}
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-4xl ">
         <Tabs tabs={tabs} />
       </div>
     </div>

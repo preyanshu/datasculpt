@@ -62,7 +62,7 @@ const links = [
 
 const Logo = () => (
   <Link
-    href="#"
+    href="/"
     className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
   >
     <div className="h-5 w-6 bg-black dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
@@ -91,6 +91,9 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{
+          overflow:"hidden"
+        }}
       >
        
           <Header />
@@ -126,13 +129,16 @@ export default function RootLayout({
               </Sidebar>
               {/* Content */}
 
-              <main className="flex-1 ">
+              <main className="flex-1 " style={{overflowY:"auto"}}>
                 {connected ? (
                  children 
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full">
+                            <dotlottie-player src="https://lottie.host/375e2e48-5819-4d6d-a691-6eada5678aae/ljUkjBwWMB.json" background="transparent" speed="1" style={{width: "250px", height: "250px"}} direction="1" playMode="normal" autoplay></dotlottie-player>
+                        
                       <h1 className="text-3xl font-semibold text-center">
-                        Connect your wallet to proceed
+                      🛠️ <b>Wallet needed!</b> <br/>
+                      <span className="text-xl ml-[30px]">Connect it and you're all set!</span>
                       </h1>
                   </div>
                 )}

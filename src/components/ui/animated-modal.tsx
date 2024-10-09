@@ -49,7 +49,7 @@ export const ModalTrigger = ({
   className?: string;
   predefined?: boolean;
 }) => {
-  const { setOpen } = useModal();k
+  const { setOpen } = useModal();
   return (
     <button
       className={cn(

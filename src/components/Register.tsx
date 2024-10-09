@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input"; // Adjust for your Input component
 import { Label } from "@/components/ui/label"; // Adjust for your Label component
 import { Button } from "@/components/ui/button"; // Adjust for your Button component
-import { toast } from "react-toastify";
+import { useToast } from "./ui/use-toast";
 
 const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const client = new AptosClient(NODE_URL);
@@ -27,6 +27,7 @@ const Register: React.FC<RegisterWorkerProps> = ({ open, setOpen, user }) => {
   const { account, signAndSubmitTransaction } = useWallet();
   const [name, setName] = useState("");
   const [role, setRole] = useState(user === "creator" ? "1" : "2");
+  const {toast} = useToast();
 
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,10 +51,15 @@ const Register: React.FC<RegisterWorkerProps> = ({ open, setOpen, user }) => {
       const response = await signAndSubmitTransaction(transaction);
       console.log("Created.", response);
       await client.waitForTransaction(response.hash);
-      toast.success("Registered successfully");
+      toast({
+        title: "Success",
+        description: "Resgistration successfull.",
+      });
     } catch (error) {
       console.log(error);
-      toast.error("Error registering user");
+      toast({variant: "destructive",
+        title: "Error",
+        description: "Error registering user"});
     }
   };
 
@@ -65,10 +71,12 @@ const Register: React.FC<RegisterWorkerProps> = ({ open, setOpen, user }) => {
 
   return (
     <div
+   
       className={cn(
         "max-w-md w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-white dark:bg-neutral-800",
         { hidden: !open }
       )}
+    
     >
       <h2 className="font-bold text-2xl text-neutral-800 dark:text-neutral-200">
         Register as a {user}

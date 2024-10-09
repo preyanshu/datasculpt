@@ -15,17 +15,18 @@ import {
   InputTransactionData,
 } from "@aptos-labs/wallet-adapter-react";
 import Register from "./Register";
-import { Button } from "./ui/button";
-import { toast } from "react-toastify";
+import { useToast } from "./ui/use-toast";
+import AOS from "aos";
+import { h1, span } from "framer-motion/client";
 
 const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const client = new AptosClient(NODE_URL);
 
-
 const moduleAddress =
   "0x3345aa79df67a6e958da1693380a2bbef9882fc309da10564bcbe6dcdcf0d801";
 
-const currentAddress = "0xa0480d4fab208ce268cac8a154f997b6aaf2036a0d9426384072b6b90659341a"
+const currentAddress =
+  "0xa0480d4fab208ce268cac8a154f997b6aaf2036a0d9426384072b6b90659341a";
 
 const convertStructure = (oldData) => {
   return oldData.flatMap((job) =>
@@ -52,14 +53,17 @@ const convertStructure = (oldData) => {
   );
 };
 
-
 const Dashboard = () => {
+  useEffect(() => {
+    AOS.init({ duration: 300 });
+    console.log("init");
+  }, []);
   const { jobs, setJobs, creatorData, setCreatorData } = useCreatorData();
   const { account, connected, signAndSubmitTransaction } = useWallet();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const handleOpen = () => setOpen(true);
-
+  const { toast } = useToast();
 
   const getJobs = async () => {
     if (!account) return [];
@@ -130,6 +134,7 @@ const Dashboard = () => {
       // console.log(newJobs);
       // Set the jobs in state
       setJobs(newJobs);
+      console.log("newjobs",newJobs)
       setLoading(false);
     } catch (error) {
       console.error(error);
@@ -145,8 +150,8 @@ const Dashboard = () => {
     const payload = {
       function: `${moduleAddress}::user_registry::get_user_profile`,
       type_arguments: [],
-      arguments: [address]
-    }
+      arguments: [address],
+    };
     try {
       const userData = await client.view(payload);
       setLoading(false);
@@ -157,21 +162,30 @@ const Dashboard = () => {
       setLoading(false);
       return null;
     }
-  }
+  };
 
   useEffect(() => {
-    if (connected && creatorData === null) {
-      getUserProfile(account?.address).then((res) =>{
+    if (connected) {
+      getUserProfile(account?.address).then((res) => {
         console.log(res);
         setCreatorData(res ? res[0] : null);
-        if(res === null)handleOpen();
-      })
-      getJobs();
+        if (res === null) handleOpen();
+      });
+      if(jobs.length === 0){
+        getJobs();
+      }
     }
-  }, [account, open]);
+  }, [account, open, connected]);
 
-  const questions = convertStructure(jobs);
-  console.log(questions);
+  // const questions = convertStructure(jobs);
+
+
+  const [questions,setQuestions] = useState([]);
+
+  useEffect(()=>{
+    setQuestions(convertStructure(jobs));
+
+  },[jobs])
 
   // Store selected answers for each question as an array (to support multiple answers)
   const [selectedAnswers, setSelectedAnswers] = useState<{
@@ -201,51 +215,62 @@ const Dashboard = () => {
     });
   };
 
-  const pickJob = async (options:Array<string>, jobId:number, taskId:number,questionIndex:number) => {
+  const pickJob = async (
+    options: Array<string>,
+    jobId: number,
+    taskId: number,
+    questionIndex: number
+  ) => {
     if (!account) {
       console.log("connect your wallet");
       return [];
     }
-    setLoading(true);
+
     const transaction: InputTransactionData = {
       data: {
         function: `${moduleAddress}::job_management::pick_and_complete_task`,
-        functionArguments: [jobId, taskId, options]
-      }
-    }
+        functionArguments: [jobId, taskId, options],
+      },
+    };
+    console.log(transaction.data)
     try {
       const response = await signAndSubmitTransaction(transaction);
-      console.log("Created.", response)
+      console.log("Created.", response);
       await client.waitForTransaction(response.hash);
-      setLoading(false);
 
       setSubmittedQuestions((prev) => ({
         ...prev,
         [questionIndex]: true,
       }));
 
-      toast.success("Task completed successfully");
+      toast({ title: "Success", description: "Task completed successfully" });
+      getUserProfile(account?.address).then((res) => {
+        console.log(res);
+        setCreatorData(res ? res[0] : null);
+        // if (res === null) handleOpen();
+      })
     } catch (error) {
-      toast.error("Failed to complete the task" + error);
-      console.log(error)
-      setLoading(false);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to complete the task",
+      });
+      console.log(error);
     }
-  }
+  };
 
-  const handleSubmit = (questionIndex: number, jobId: number, taskId: number) => {
-   
-
+  const handleSubmit = (
+    questionIndex: number,
+    jobId: number,
+    taskId: number
+  ) => {
     // Log the selected answers for the current question
     const selectedOptions = selectedAnswers[questionIndex];
-    console.log(
-      `Selected options for question ${questionIndex + 1}:`,
-      selectedOptions
-    );
-    
-    const res = pickJob(selectedOptions, jobId, taskId , questionIndex);
+    console.log(selectedOptions, "selectedOptions", jobId, taskId);
+
+    const res = pickJob(selectedOptions, jobId, taskId, questionIndex);
     console.log("picked job response", res);
     //todo confirm the trancsaction executed
-   
   };
 
   const handleRefresh = () => {
@@ -262,7 +287,7 @@ const Dashboard = () => {
     );
   }
 
-  if(loading){
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
         <img src="/assets/loading.gif" alt="" className="h-[80px]" />
@@ -270,33 +295,61 @@ const Dashboard = () => {
     );
   }
 
-  return creatorData === null ? 
-  <div className="h-full flex flex-col gap-4 justify-center items-center">
-    {/* <h1 className="text-3xl font-semibold text-center">Please register to continue....</h1> */}
-    {/* <Button color="primary" className="hover:pointer" onClick={handleOpen}>
+  return creatorData === null ? (
+    <div className="h-full flex flex-col gap-4 justify-center items-center">
+      {/* <h1 className="text-3xl font-semibold text-center">Please register to continue....</h1> */}
+      {/* <Button color="primary" className="hover:pointer" onClick={handleOpen}>
         Register
     </Button> */}
-    <Register open={open} setOpen={setOpen} user={"worker"}/>
-  </div> 
-  : 
-  (creatorData?.role === "1") ?
-     (
-      <div className="flex flex-col items-center justify-center h-full">
-        <h1 className="text-3xl font-semibold text-center">
-          You are a Creator. Please switch to Worker to proceed
-        </h1>
+      <div className="w-[100px] h-[100px] bg-blue-600" data-aos="zoom-in"></div>
+
+      <div data-aos="zoom-down" className="bg-blue-800 w-full">
+        <Register open={open} setOpen={setOpen} user={"worker"} />
       </div>
-    )
-  :
-   (
+    </div>
+  ) : creatorData?.role === "1" ? (
+    <div className="flex flex-col items-center justify-center h-full">
+      <h1 className="text-3xl font-semibold text-center">
+        You are a Creator. Please switch to Worker to proceed
+      </h1>
+    </div>
+  ) : (
     <div className="flex flex-col items-center w-full h-full">
+
+
+
+<div className="absolute top-5 right-[250px] flex justify-end w-[60%] items-center">
+
+<h1 className=" text-xl flex items-center font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-blue-500 shadow-md mr-[30px]">
+  <span className="text-white">Reputation: </span>
+  
+  <span className="ml-2 text-2xl">
+    {creatorData.reputation_points > 0 
+      ? "⭐".repeat(creatorData.reputation_points)  // Render stars based on reputation score
+      : <span className="text-red-500 text-xl ">User Banned</span>  // Show 'User Banned' if score is 0
+    }
+  </span>
+</h1>
+
+<h1 className="text-xl font-bold shadow-md">
+  <span className="text-white">Balance:</span> <span className="ml-2 text-green-500">{creatorData.balance / 1e8} APT</span>
+</h1>
+
+
+
+</div>
+
+
+
+
       <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-neutral-900 flex justify-center items-center flex-col gap-2 flex-1 w-full h-full">
         <div className="flex gap-2 flex-1 justify-center min-h-[500px] w-full max-w-[76%]">
           <div className="h-full w-3/4 rounded-lg p-4 flex justify-center items-center mt-10 flex-col">
             <div className="w-full ml-8 -mt-15 mb-5 text-4xl">
               <h1>Tasks</h1>
             </div>
-
+                
+            
             <Carousel className="w-full max-w-[800px]">
               <CarouselContent>
                 {/* Disclaimer Carousel Item */}
@@ -326,107 +379,119 @@ const Dashboard = () => {
                   </div>
                 </CarouselItem>
 
-                {console.log(questions,"questions")}
-
+                {console.log(questions, "questions")}
+                {console.log(currentAddress, "currentAddress")}
+                
                 {/* Questions Carousel Items */}
-                {questions.filter(e=>e?.picked_by?.includes(currentAddress)).map((questionObj, questionIndex: number) => (
-                  <CarouselItem key={questionIndex}>
-                    <div className="p-1">
-                      <Card className="border-none rounded-lg">
-                        <CardContent className="flex h-[400px] items-center justify-center p-6 dark:bg-neutral-800 border-neutral-800 rounded-lg">
-                          <div className="bg-neutral-800 h-[350px] w-full p-4 rounded-lg overflow-auto relative">
-                            {/* Question Display */}
-                            <div className="my-6">
-                              <label className="text-white mb-4 block text-lg font-semibold">
-                                Q{questionIndex + 1}:{" "}
-                                {questionObj.question.question}
-                              </label>
+                {questions
+                  .filter((e) => ((!(e?.pickedBy?.includes(currentAddress)) && !(e?.isCompleted))))
+                  .map((questionObj, questionIndex: number) => (
+                    <CarouselItem key={questionIndex}>
+                      <div className="p-1">
+                        <Card className="border-none rounded-lg">
+                          <CardContent className="flex h-[400px] items-center justify-center p-6 dark:bg-neutral-800 border-neutral-800 rounded-lg">
+                            <div className="bg-neutral-800 h-[350px] w-full p-4 rounded-lg overflow-auto relative">
+                              {/* Question Display */}
+                              <div className="my-6">
+                                <label className="text-white mb-4 block text-lg font-semibold">
+                                
+                                {/* {JSON.stringify(questionObj.isCompleted)} */}
+                                {String(questionObj?.isCompleted)}
+                                  Q{questionIndex + 1}:{" "}
+                                  {questionObj.question.question}
+                                </label>
 
-                              {/* If there is an image URL, display it */}
-                              {questionObj.question.url &&
-                                (questionObj.type === "image-text" ||
-                                  questionObj.type === "image-image") && (
-                                  <img
-                                    src={questionObj.question.url}
-                                    alt={`Question ${questionIndex + 1}`}
-                                    className="w-[120px] h-[120px] object-cover mb-4 rounded-lg"
-                                  />
+                                {/* If there is an image URL, display it */}
+                                {questionObj.question.url &&
+                                  (questionObj.type === "image-text" ||
+                                    questionObj.type === "image-image") && (
+                                    <img
+                                      src={questionObj.question.url}
+                                      alt={`Question ${questionIndex + 1}`}
+                                      className="w-[120px] h-[120px] object-cover mb-4 rounded-lg"
+                                    />
+                                  )}
+
+                                {/* Answer Options (text or image) */}
+                                <div className="grid grid-cols-2 gap-4">
+                                  {questionObj.options.map(
+                                    (option, optionIndex: number) => (
+                                      <div
+                                        key={optionIndex}
+                                        className={`border-2 rounded-lg flex items-center justify-between p-4 cursor-pointer overflow-auto ${
+                                          selectedAnswers[
+                                            questionIndex
+                                          ]?.includes(option)
+                                            ? "border-green-700 bg-green-600"
+                                            : "border-gray-600 bg-neutral-900"
+                                        }`}
+                                        onClick={() =>
+                                          handleAnswerChange(
+                                            questionIndex,
+                                            option
+                                          )
+                                        }
+                                      >
+                                        <label className="text-white flex items-center cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={selectedAnswers[
+                                              questionIndex
+                                            ]?.includes(option)}
+                                            onChange={() =>
+                                              handleAnswerChange(
+                                                questionIndex,
+                                                option
+                                              )
+                                            }
+                                            className="mr-4 hidden"
+                                          />
+                                          {questionObj.type === "text-text" ||
+                                          questionObj.type === "text-image" ? (
+                                            <img
+                                              src={option}
+                                              alt={`Option ${optionIndex + 1}`}
+                                              className="w-[150px] h-[150px] object-cover"
+                                            />
+                                          ) : (
+                                            <span>{option}</span>
+                                          )}
+                                        </label>
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Submit Task Button on bottom-right */}
+                              <div className="flex justify-end">
+                                {!submittedQuestions[questionIndex] && (
+                                  <button
+                                    className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                                    onClick={() =>
+                                      handleSubmit(
+                                        questionIndex,
+                                        questionObj.jobid,
+                                        questionObj.taskid
+                                      )
+                                    }
+                                  >
+                                    Submit Task
+                                  </button>
                                 )}
 
-                              {/* Answer Options (text or image) */}
-                              <div className="grid grid-cols-2 gap-4">
-                                {questionObj.options.map(
-                                  (option, optionIndex: number) => (
-                                    <div
-                                      key={optionIndex}
-                                      className={`border-2 rounded-lg flex items-center justify-between p-4 cursor-pointer overflow-auto ${
-                                        selectedAnswers[
-                                          questionIndex
-                                        ]?.includes(option)
-                                          ? "border-green-500 bg-green-100"
-                                          : "border-gray-600 bg-neutral-900"
-                                      }`}
-                                      onClick={() =>
-                                        handleAnswerChange(
-                                          questionIndex,
-                                          option
-                                        )
-                                      }
-                                    >
-                                      <label className="text-white flex items-center cursor-pointer">
-                                        <input
-                                          type="checkbox"
-                                          checked={selectedAnswers[
-                                            questionIndex
-                                          ]?.includes(option)}
-                                          onChange={() =>
-                                            handleAnswerChange(
-                                              questionIndex,
-                                              option
-                                            )
-                                          }
-                                          className="mr-4 hidden"
-                                        />
-                                        {questionObj.type === "text-text" ||
-                                        questionObj.type === "text-image" ? (
-                                          <img
-                                            src={option}
-                                            alt={`Option ${optionIndex + 1}`}
-                                            className="w-[150px] h-[150px] object-cover"
-                                          />
-                                        ) : (
-                                          <span>{option}</span>
-                                        )}
-                                      </label>
-                                    </div>
-                                  )
+                                {submittedQuestions[questionIndex] && (
+                                  <div className="text-green-500 font-semibold">
+                                    Task Submitted
+                                  </div>
                                 )}
                               </div>
                             </div>
-
-                            {/* Submit Task Button on bottom-right */}
-                            <div className="flex justify-end">
-                              {!submittedQuestions[questionIndex] && (
-                                <button
-                                  className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                                  onClick={() => handleSubmit(questionIndex, questionObj.jobid, questionObj.taskid)}
-                                >
-                                  Submit Task
-                                </button>
-                              )}
-
-                              {submittedQuestions[questionIndex] && (
-                                <div className="text-green-500 font-semibold">
-                                  Task Submitted
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </CarouselItem>
-                ))}
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </CarouselItem>
+                  ))}
 
                 {/* Extra CarouselItem for Task End Message */}
                 <CarouselItem>

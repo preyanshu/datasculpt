@@ -4,7 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { WalletProvider } from "@/components/WalletProvider";
 import { Toaster } from "@/components/ui/toaster";
-import { Bounce, ToastContainer } from "react-toastify";
+import { ModalProvider } from "@/components/ui/animated-modal";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -30,7 +30,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {/* Ensure default dark theme is set */}
         <ThemeProvider
@@ -39,23 +38,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <ModalProvider>
           <WalletProvider>
             {children}
-            <ToastContainer
-              position="top-right"
-              autoClose={5000}
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-              theme="dark"
-              transition={Bounce}
-            />
             <Toaster />
           </WalletProvider>
+          </ModalProvider>
         </ThemeProvider>
       </body>
       <script

@@ -68,7 +68,7 @@ export default function ExpandableCard({ completedTasks }: ExpandableCardProps) 
         {active && (
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            animate={{ opacity: 0 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 h-full w-full z-10"
           />
@@ -163,15 +163,16 @@ export default function ExpandableCard({ completedTasks }: ExpandableCardProps) 
           </div>
         ) : null}
       </AnimatePresence>
-      <ul className="mx-auto w-full gap-4">
+      <ul className="mx-auto w-full gap-4 ">
         {completedTasks.map((task) => (
           <motion.div
             layoutId={`card-${task.title}-${id}`}
-            key={`card-${task.title}-${id}`}
+            key={`card-${task.title}-${id}-${task.description}`}
             onClick={() => setActive(task)}
-            className="p-4 flex flex-col md:flex-row justify-between items-center hover:bg-neutral-50 dark:hover:bg-neutral-700 rounded-xl cursor-pointer shadow hover:shadow-md transition-shadow duration-200"
+            className="p-4 flex flex-col md:flex-row justify-between items-center hover:bg-neutral-50 dark:hover:bg-neutral-700 rounded-xl cursor-pointer shadow hover:shadow-md transition-shadow duration-200 
+             mb-[20px] "
           >
-            <div className="flex gap-4 flex-row md:flex-row justify-between align-between w-full">
+            <div className="flex gap-4 flex-row md:flex-row justify-between align-between w-full ">
               <div>
                 <motion.h3
                   layoutId={`title-${task.title}-${id}`}

@@ -42,15 +42,17 @@ export const AnimatedModalDemo: React.FC<AnimatedModalDemoProps> = ({
   const {toast} = useToast();
   const { setOpen } = useModal();
 
-  // Calculate price per person and platform fee (2%)
+  console.log("predefined",predefinedQuestions);
+
+
   const pricePerPerson = totalPrice / (totalTasks * peoplePerTask);
-  const platformFee = totalPrice * 0.0025; // 2% platform fee
-  const totalWithFee = totalPrice + platformFee; // Total price with platform fee
+  const platformFee = totalPrice * 0.0025; 
+  const totalWithFee = totalPrice + platformFee; 
   console.log(totalWithFee * 1e8);
 
-  // Check if any predefined question has an empty 'answers' field
+
   const isPredefined = predefinedQuestions.every(
-    (question) => question.answers && question.answers.length > 0
+    (question) => question.answers && question.answers.length >= 0
   );
   const questions = predefinedQuestions.map((question) => {
     return question.question.question;
@@ -62,7 +64,7 @@ export const AnimatedModalDemo: React.FC<AnimatedModalDemoProps> = ({
     return question.answers;
   });
 
-  console.log(questions, answers, preanswers);
+  // console.log(questions, answers, "p",preanswers);
   const createJob = async () => {
     if (!account) {
       console.log("connect your wallet");
@@ -75,7 +77,7 @@ export const AnimatedModalDemo: React.FC<AnimatedModalDemoProps> = ({
         functionArguments: [
           questions,
           answers,
-          preanswers,
+          preanswers, 
           peoplePerTask,
           fee.toFixed(0),
           name,
@@ -88,13 +90,12 @@ export const AnimatedModalDemo: React.FC<AnimatedModalDemoProps> = ({
       console.log("Created.", response);
       await client.waitForTransaction(response.hash);
       toast({
-        variant: "success",
         title: "Success",
         description: "Job created successfully.",
       });
       setOpen(false);
     } catch (error) {
-      console.log(error);
+      console.log(error, "failed to job");
       setOpen(false);
       toast({
         variant: "destructive",

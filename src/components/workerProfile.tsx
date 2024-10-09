@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "../components/ui/sidebar";
 import {
   IconArrowLeft,
@@ -23,6 +23,10 @@ import Register from "./Register";
 import { Button } from "./ui/button";
 import Withdraw from "./Wthdraw";
 import { toast } from "react-toastify";
+import { useToast } from "./ui/use-toast";
+import { filter, map } from "framer-motion/client";
+import { title } from "process";
+import { description } from "./taskExtracted";
 
 const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const client = new AptosClient(NODE_URL);
@@ -30,97 +34,19 @@ const client = new AptosClient(NODE_URL);
 const moduleAddress =
   "0x3345aa79df67a6e958da1693380a2bbef9882fc309da10564bcbe6dcdcf0d801";
 
-export function SidebarDemo() {
-  const links = [
-    {
-      label: "Dashboard",
-      href: "#",
-      icon: (
-        <IconBrandTabler className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Profile",
-      href: "#",
-      icon: (
-        <IconUserBolt className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Settings",
-      href: "#",
-      icon: (
-        <IconSettings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Logout",
-      href: "#",
-      icon: (
-        <IconArrowLeft className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-  ];
-  return (
-    <div
-      className={cn(
-        "rounded-md flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-900  flex-1  mx-auto border border-neutral-200 dark:border-neutral-800 overflow-hidden",
-        "h-screen w-screen"
-      )}
-    >
-      <Sidebar>
-        <SidebarBody className="justify-between gap-10">
-          <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-            <>
-              <Logo />
-            </>
-            <div className="mt-8 flex flex-col gap-2">
-              {links.map((link, idx) => (
-                <SidebarLink key={idx} link={link} />
-              ))}
-            </div>
-          </div>
-          <div>
-            <SidebarLink
-              link={{
-                label: "John Doe",
-                href: "#",
-                icon: (
-                  <Image
-                    src="https://assets.aceternity.com/manu.png"
-                    className="h-7 w-7 flex-shrink-0 rounded-full"
-                    width={50}
-                    height={50}
-                    alt="Avatar"
-                  />
-                ),
-              }}
-            />
-          </div>
-        </SidebarBody>
-      </Sidebar>
-      <Dashboard />
-    </div>
-  );
-}
-
-export const Logo = () => {
-  return (
-    <Link
-      href="#"
-      className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
-    >
-      <div className="h-5 w-6 bg-black dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
-      <motion.span
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="font-medium text-black dark:text-white whitespace-pre"
-      >
-        Acet
-      </motion.span>
-    </Link>
-  );
-};
+  function convertTaskData(inputArray, currentAddress) {
+    console.log(inputArray,"inp");
+    return inputArray.flatMap(item =>
+      item.tasks
+        .filter(task => !task.picked_by.includes(currentAddress)) // Filter based on picked_by for each task
+        .map(task => ({
+          id: parseInt(item.jobId), // Convert jobId to number for id
+          title: `Task ${task.task_id}`, // Use task_id for title
+          description: task.question, // Use the question for description
+          responses: task.task_answers, // Directly map task_answers to responses
+        }))
+    );
+  }
 
 // Worker-specific mock data
 const workerProfile = {
@@ -132,39 +58,25 @@ const workerProfile = {
   accountBalance: 125.5, // in Apt
 };
 
-const completedTasks = [
-  {
-    id: 1,
-    title: "Task 1",
-    description:
-      "What is your favorite color? https://example.com/cat.jpg ghvhgvbjhvj ",
-    payment: 50,
-    responses: [
-      [
-        "Red",
-        "Bluettps://example.com/cat.jpgttps://example.com/cat.jpgttps://example.com/cat.jpg",
-      ],
-      ["Green", "Red", "Red", "Blue"],
-    ],
-  },
-  {
-    id: 2,
-    title: "Task 2",
-    description: "What is your favorite animal?",
-    payment: 75,
-    responses: [
-      ["Dog", "Cat"],
-      ["https://example.com/cat.jpg", "https://example.com/cat.jpg"],
-    ],
-  },
-];
+
+
+
+
 
 const Dashboard = () => {
-  const { creatorData, setCreatorData } = useCreatorData();
+  const { creatorData, setCreatorData , jobs } = useCreatorData();
   const [open, setOpen] = useState(false);
   const [openWithdraw, setOpenWithdraw] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+
+  const completedTasks = useMemo(() => {
+    const allCompletedTasks = convertTaskData(jobs, creatorData?.wallet_address);
+    // Get the last 10 completed tasks
+    return allCompletedTasks.slice(-10); // Use slice to get the last 10 tasks
+  }, [jobs, creatorData?.wallet_address]);
 
   const handleOpen = () => setOpen(true);
   const { account, connected, signAndSubmitTransaction } = useWallet();
@@ -174,33 +86,41 @@ const Dashboard = () => {
     if (!account) {
       console.log("connect your wallet");
       return [];
-    } 
-    setLoading(true);
+    }
+    // setLoading(true);
     const transaction: InputTransactionData = {
       data: {
         function: `${moduleAddress}::user_registry::withdraw_balance`,
         functionArguments: [withdrawAmount],
-      }
-    }
+      },
+    };
     try {
       const response = await signAndSubmitTransaction(transaction);
-      console.log("Withdraw.", response)
+      console.log("Withdraw.", response);
       await client.waitForTransaction(response.hash);
-      setLoading(false);
-      toast.success("Withdrawal Successful");
+      // setLoading(false);
+      await getUserProfile(account?.address).then((res) => {
+        console.log(res);
+        setCreatorData(res ? res[0] : null);
+      });
+      toast({ title: "Success", description: "Withdrawal Successful" });
     } catch (error) {
-      console.log(error)
-      setLoading(false);
-      toast.error("Withdrawal Failed");
+      console.log(error);
+      // setLoading(false);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Withdrawal Failed",
+      });
     }
-  }
+  };
 
   const getUserProfile = async (address: string | undefined) => {
     if (!address) {
       console.log("Address is not valid");
       return null;
     }
-    setLoading(true); 
+    setLoading(true);
     const payload = {
       function: `${moduleAddress}::user_registry::get_user_profile`,
       type_arguments: [],
@@ -218,11 +138,11 @@ const Dashboard = () => {
     }
   };
   useEffect(() => {
-    if (connected && creatorData === null) {
+    if (connected) {
       getUserProfile(account?.address).then((res) => {
         console.log(res);
-        setCreatorData(res ? res[0]: null);
-        if(res === null)handleOpen();
+        setCreatorData(res ? res[0] : null);
+        if (res === null) handleOpen();
       });
     }
   }, [account, open]);
@@ -231,10 +151,10 @@ const Dashboard = () => {
     {
       title: "Completed Tasks",
       value: "completed",
-      content: (
+      content: (<>
         <div
           className="w-full overflow-hidden relative h-[600px] rounded-2xl p-10 text-white bg-neutral-800"
-          style={{ marginTop: "-100px" }}
+          style={{ marginTop: "-100px",marginBottom:"30px" ,overflowY:"scroll"}}
         >
           {completedTasks.length > 0 ? (
             <ul className="space-y-4">
@@ -246,11 +166,14 @@ const Dashboard = () => {
             </p>
           )}
         </div>
-      ),
+        <div className="h-[40px]">
+
+        </div>
+      </>),
     },
   ];
 
-  if(loading){
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
         <img src="/assets/loading.gif" alt="" className="h-[80px]" />
@@ -280,7 +203,7 @@ const Dashboard = () => {
     );
   }
 
-  if(creatorData?.role === "1"){
+  if (creatorData?.role === "1") {
     return (
       <div className="flex flex-col items-center justify-center h-full">
         <h1 className="text-3xl font-semibold text-center">
@@ -341,16 +264,27 @@ const Dashboard = () => {
                   Account Balance:
                 </span>{" "}
                 <span className="text-blue-400">
-                  {creatorData.balance/1e8} Apt
+                  {creatorData.balance / 1e8} Apt
                 </span>
               </div>
             </div>
           </div>
           {/* Withdraw Button */}
-          <button className="ml-auto px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg shadow-md hover:from-blue-500 hover:to-blue-700 transition-all" onClick={() => setOpenWithdraw(true)}>
+          <button
+            className="ml-auto px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg shadow-md hover:from-blue-500 hover:to-blue-700 transition-all"
+            onClick={() => setOpenWithdraw(true)}
+          >
             Withdraw
           </button>
-          {openWithdraw && <Withdraw openWithdraw={openWithdraw} setOpenWithdraw={setOpenWithdraw} withdrawAmount={withdrawAmount} setWithdrawAmount={setWithdrawAmount} withdrawFunds={withdraw}/>}
+          {openWithdraw && (
+            <Withdraw
+              openWithdraw={openWithdraw}
+              setOpenWithdraw={setOpenWithdraw}
+              withdrawAmount={withdrawAmount}
+              setWithdrawAmount={setWithdrawAmount}
+              withdrawFunds={withdraw}
+            />
+          )}
         </div>
       </div>
 

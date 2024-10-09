@@ -46,6 +46,7 @@ const Dashboard = () => {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const { toast } = useToast();
+  const [loading , setLoading] = useState(false);
   
   console.log(creatorData);
 
@@ -54,6 +55,7 @@ const Dashboard = () => {
       console.log("Address is not valid");
       return null;
     }
+    setLoading(true);
     const payload = {
       function: `${moduleAddress}::user_registry::get_user_profile`,
       type_arguments: [],
@@ -62,15 +64,17 @@ const Dashboard = () => {
     try {
       const userData = await client.view(payload);
       // console.log(userData);
+      setLoading(false);
       return userData;
     } catch (error) {
       console.log(error);
+      setLoading(false);
       return null;
     }
   }
 
   useEffect(() => {
-    if (connected && creatorData === null) {
+    if (connected) {
       getUserProfile(account?.address).then((res) =>{
         console.log(res);
         setCreatorData(res ? res[0] : null);
@@ -78,7 +82,7 @@ const Dashboard = () => {
       })
       // getJobs();
     }
-  }, [account, open]);
+  }, [account, open, connected]);
 
   useEffect(() => {
     // Whenever questions change, filter a random set of them for verification
@@ -87,7 +91,7 @@ const Dashboard = () => {
       setFilteredQuestions(randomQuestions);
 
       // Initialize predefined answers for user input
-      setPredefinedQuestions(randomQuestions.map(q => ({ ...q, answers: [] })));
+      setPredefinedQuestions(questions.map(q => ({ ...q, answers: [] })));
     }
   }, [questions]);
 
@@ -212,8 +216,13 @@ const Dashboard = () => {
       );
     }
   };
-
-
+  if(loading){
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <img src="/assets/loading.gif" alt="" className="h-[80px]" />
+      </div>
+    );
+  }
 
   if (!connected) {
     return (
