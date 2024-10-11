@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "../components/ui/sidebar";
 import {
   IconArrowLeft,
@@ -24,29 +24,30 @@ import { Button } from "./ui/button";
 import Withdraw from "./Wthdraw";
 import { toast } from "react-toastify";
 import { useToast } from "./ui/use-toast";
-import { filter, map } from "framer-motion/client";
+import { address, data, filter, map } from "framer-motion/client";
 import { title } from "process";
 import { description } from "./taskExtracted";
+import { log } from "console";
 
 const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const client = new AptosClient(NODE_URL);
 
 const moduleAddress =
-  "0x3345aa79df67a6e958da1693380a2bbef9882fc309da10564bcbe6dcdcf0d801";
+  "0x57bbd67464830f3ea4464b4e2e20de137a42e0eb5c44f12e602261e6ec1a6c0f";
 
-  function convertTaskData(inputArray, currentAddress) {
-    console.log(inputArray,"inp");
-    return inputArray.flatMap(item =>
-      item.tasks
-        .filter(task => !task.picked_by.includes(currentAddress)) // Filter based on picked_by for each task
-        .map(task => ({
-          id: parseInt(item.jobId), // Convert jobId to number for id
-          title: `Task ${task.task_id}`, // Use task_id for title
-          description: task.question, // Use the question for description
-          responses: task.task_answers, // Directly map task_answers to responses
-        }))
-    );
-  }
+function convertTaskData(inputArray, currentAddress) {
+  console.log(inputArray, "inp");
+  return inputArray.flatMap((item) =>
+    item.tasks
+      .filter((task) => task.picked_by.includes(currentAddress)) 
+      .map((task) => ({
+        id: parseInt(item.jobId), // Convert jobId to number for id
+        title: `Job ${item.jobId} Task ${task.task_id}`, // Use task_id for title
+        description: task.question, // Use the question for description
+        responses: task.task_answers, // Directly map task_answers to responses
+      }))
+  );
+}
 
 // Worker-specific mock data
 const workerProfile = {
@@ -58,29 +59,158 @@ const workerProfile = {
   accountBalance: 125.5, // in Apt
 };
 
-
-
-
-
-
 const Dashboard = () => {
-  const { creatorData, setCreatorData , jobs } = useCreatorData();
+  const { creatorData, setCreatorData } = useCreatorData();
   const [open, setOpen] = useState(false);
+  const [jobs, setJobs] = useState<Array<any>>([]);
   const [openWithdraw, setOpenWithdraw] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
-
-
-  const completedTasks = useMemo(() => {
-    const allCompletedTasks = convertTaskData(jobs, creatorData?.wallet_address);
-    // Get the last 10 completed tasks
-    return allCompletedTasks.slice(-10); // Use slice to get the last 10 tasks
-  }, [jobs, creatorData?.wallet_address]);
-
-  const handleOpen = () => setOpen(true);
+  const [loadingJob, setLoadingJob] = useState(false);
   const { account, connected, signAndSubmitTransaction } = useWallet();
-  console.log(creatorData);
+  const [completedTasks, setCompletedTasks] = useState<Array<any>>([]);
+  const { toast } = useToast();
+  const [prevState, setPrevState] = useState<Array<any>>([]);
+  let currIdxRef = useRef(-1);
+  // useEffect(() => {
+  //   const allCompletedTasks = convertTaskData(jobs, account?.address);
+  //   // Get the last 10 completed tasks
+  //   setCompletedTasks(allCompletedTasks); // Use slice to get the last 10 tasks
+  // }, [jobs, account?.address]);
+  const handleOpen = () => setOpen(true);
+  // console.log(creatorData);
+
+  const currentJobIndexRef = useRef(0);
+  const currentTaskIndexRef = useRef(0);
+
+  // Main function to fetch jobs and tasks
+  const getJobs = async (direction: "next" | "previous") => {
+    if (!account) return [];
+    setLoadingJob(true);
+  
+    try {
+      const jobResource = await client.getAccountResource(
+        "0x1dc03758f2c3a17cec451cfef4b7f50fd530c10400731aa2c22abcde7b678bd6",
+        `${moduleAddress}::job_management::JobManagement`
+      );
+  
+      const jobHandle = (jobResource as any).data.jobs.handle;
+      const jobCounter = (jobResource as any).data.job_counter;
+  
+      if (jobCounter === 0) {
+        setJobs([]);
+        return;
+      }
+      console.log("first", currIdxRef.current);
+      let totalFetchedTasks = 0;
+      let allJobs = [];
+  
+      let jobIndex = currentJobIndexRef.current; // Get current job index from ref
+      let taskIndex = currentTaskIndexRef.current; // Get current task index from ref
+  
+      if (direction === "next") {
+        // Check if there is already cached data in prevState
+        if (prevState.length > currIdxRef.current+1) {
+            setCompletedTasks(prevState[currIdxRef.current+1]);
+            currIdxRef.current++;
+            console.log(currIdxRef.current, "next")
+            setLoadingJob(false); // Set loading false because we already have the data
+            return;
+        }
+        // Otherwise, fetch new data
+        jobIndex = currentJobIndexRef.current;
+        taskIndex = currentTaskIndexRef.current;
+    
+    } else if (direction === "previous") {        
+        // Ensure we don't go below the first index
+        const newIdx = currIdxRef.current > 0 ? currIdxRef.current - 1 : 0;
+        setCompletedTasks(prevState[newIdx]); // Fetch the previous state
+        currIdxRef.current = newIdx; // Update the current index
+        setLoadingJob(false);
+        console.log("previous", currIdxRef.current, prevState[currIdxRef.current]);
+        return;
+    }
+  
+      let ans = [];
+  
+      // Continue fetching tasks until we meet the batch size and filter tasks
+      while (jobIndex < jobCounter && ans.length < 4) {
+        const tableItem = {
+          key_type: "u64",
+          value_type: `${moduleAddress}::job_management::Job`,
+          key: `${jobIndex + 1}`,
+        };
+        const job = await client.getTableItem(jobHandle, tableItem);
+  
+        const taskHandle = job.tasks.handle;
+        const taskCounter = job.task_counter;
+  
+        // Calculate the number of tasks to fetch from this job
+        const remainingTasksInJob = taskCounter - taskIndex;
+  
+        // Fetch tasks starting from the last fetched task index
+        const taskFetchPromises = Array.from(
+          { length: remainingTasksInJob },
+          (_, index) => {
+            const taskItem = {
+              key_type: "u64",
+              value_type: `${moduleAddress}::job_management::Task`,
+              key: `${taskIndex + index + 1}`,
+            };
+            return client.getTableItem(taskHandle, taskItem);
+          }
+        );
+  
+        const tasks = await Promise.all(taskFetchPromises);
+        totalFetchedTasks += tasks.length;
+  
+        // Push job data with tasks into allJobs array
+        allJobs.push({
+          creator: job.creator,
+          jobId: job.job_id,
+          taskCounter: job.task_counter,
+          tasks: tasks,
+          amount: job.amount,
+        });
+  
+        // Filter tasks based on the condition
+        ans = convertTaskData(allJobs, account?.address);
+  
+        // If no valid tasks found, fetch from the next job
+        taskIndex += remainingTasksInJob;
+        if (taskIndex >= taskCounter) {
+          jobIndex++; // Move to the next job
+          taskIndex = 0; // Reset task index for the new job
+        }
+  
+        // Handle out-of-bounds taskIndex if previous was requested
+        if (taskIndex < 0) taskIndex = 0;
+  
+        currentJobIndexRef.current = jobIndex; // Update the current job index in the ref
+        currentTaskIndexRef.current = taskIndex; // Update the current task index in the ref
+      }
+  
+      // If there are filtered tasks, append the fetched jobs
+      if (ans.length >= 0) {
+        setCompletedTasks(ans);        
+        // Use function form of setState to ensure latest prevState is used
+        setPrevState((prev) => [...prevState, ans]);
+        ans.length > 0 && (currIdxRef.current = prevState.length);
+        console.log("next", currIdxRef.current);
+      }
+  
+      console.log(ans, "ans");
+      setJobs((prev) => [...prev, allJobs]);
+      console.log("Fetched jobs and tasks:", allJobs);
+      console.log(jobIndex, taskIndex, "jobIndex, taskIndex");
+      // console.log(completedTasks, "completedTasks");
+      setLoadingJob(false);
+    } catch (error) {
+      console.error(error);
+      setLoadingJob(false);
+    }
+  };
+  
 
   const withdraw = async () => {
     if (!account) {
@@ -145,31 +275,40 @@ const Dashboard = () => {
         if (res === null) handleOpen();
       });
     }
+    if (jobs.length === 0) getJobs("next");
   }, [account, open]);
 
   const tabs = [
     {
       title: "Completed Tasks",
       value: "completed",
-      content: (<>
-        <div
-          className="w-full overflow-hidden relative h-[600px] rounded-2xl p-10 text-white bg-neutral-800"
-          style={{ marginTop: "-100px",marginBottom:"30px" ,overflowY:"scroll"}}
-        >
-          {completedTasks.length > 0 ? (
-            <ul className="space-y-4">
-              <ExpandableCard completedTasks={completedTasks} />
-            </ul>
-          ) : (
-            <p className="text-neutral-600 dark:text-neutral-300">
-              No completed tasks found.
-            </p>
-          )}
-        </div>
-        <div className="h-[40px]">
-
-        </div>
-      </>),
+      content: (
+        <>
+          <div
+            className="w-full overflow-hidden relative h-[480px] rounded-2xl p-10 text-white bg-neutral-800"
+            style={{
+              marginTop: "-100px",
+              marginBottom: "30px",
+              overflowY: "scroll",
+            }}
+          >
+            {completedTasks.length > 0 ? (
+              <ul className="space-y-4">
+                <ExpandableCard completedTasks={completedTasks} />
+              </ul>
+            ) : (
+              <p className="text-neutral-600 dark:text-neutral-300">
+                No completed tasks found.
+              </p>
+            )}
+          </div>
+          <div className="w-full flex">
+            <button className="ml-auto px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg shadow-md hover:from-blue-500 hover:to-blue-700 transition-all" disabled={currIdxRef.current === 0} onClick={() => getJobs('previous')}>previous</button>
+            <button className="ml-auto px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg shadow-md hover:from-blue-500 hover:to-blue-700 transition-all" disabled={completedTasks.length === 0} onClick={() => getJobs('next')}>next</button>
+          </div>
+          <div className="h-[40px]"></div>
+        </>
+      ),
     },
   ];
 
@@ -212,7 +351,7 @@ const Dashboard = () => {
       </div>
     );
   }
-
+  console.log(prevState)
   return (
     <div className="flex flex-col items-center w-full h-full p-4 md:p-10">
       {/* Worker Profile Section */}
@@ -289,9 +428,15 @@ const Dashboard = () => {
       </div>
 
       {/* Tabs */}
-      <div className="w-full max-w-4xl">
-        <Tabs tabs={tabs} />
-      </div>
+      {!loadingJob ? (
+        <div className="w-full max-w-4xl">
+          <Tabs tabs={tabs} />
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full">
+          <img src="/assets/loading.gif" alt="" className="h-[80px]" />
+        </div>
+      )}
     </div>
   );
 };

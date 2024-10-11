@@ -20,7 +20,7 @@ const { toast } = useToast()
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Unknown wallet error",
+          description: "There is some issue with wallet connection please check your internet connection and reconnect your wallet",
         });
       }}
     >

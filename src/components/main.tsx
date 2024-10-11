@@ -17,7 +17,7 @@ const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const client = new AptosClient(NODE_URL);
 
 const moduleAddress =
-  "0x3345aa79df67a6e958da1693380a2bbef9882fc309da10564bcbe6dcdcf0d801";
+  "0x57bbd67464830f3ea4464b4e2e20de137a42e0eb5c44f12e602261e6ec1a6c0f";
 
 interface QuestionSet {
   question: { question: string; url?: string };
@@ -275,7 +275,7 @@ const Dashboard = () => {
                 <button
                   className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
                   onClick={handleNext}
-                  disabled={step === 3 || (step === 1 && files.length === 0)}
+                  disabled={step === 3 || (step === 1 && files?.length === 0)}
                 >
                   Next Step
                 </button>

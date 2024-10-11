@@ -9,7 +9,7 @@ export function FileUploadDemo({ selectedQuestionType , setFiles , files}: any) 
   const handleFileUpload = (uploadedFiles: File[]) => {
     
 
- 
+     console.log("uploadedFiles",uploadedFiles);
       setFiles(uploadedFiles); // Set the state with the valid CSV file
    
   

@@ -7,6 +7,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
 import { useCreatorData } from "@/context/creatorContext";
 import { AptosClient } from "aptos";
@@ -17,22 +18,28 @@ import {
 import Register from "./Register";
 import { useToast } from "./ui/use-toast";
 import AOS from "aos";
-import { data, filter, h1, span } from "framer-motion/client";
-import { log } from "console";
+import { data, filter, h1, map, span } from "framer-motion/client";
+import { count, log } from "console";
 import { parse, stringify } from "querystring";
+import { on } from "events";
+import { type } from "os";
 
 const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const client = new AptosClient(NODE_URL);
 
 const moduleAddress =
-  "0x3345aa79df67a6e958da1693380a2bbef9882fc309da10564bcbe6dcdcf0d801";
+  "0x57bbd67464830f3ea4464b4e2e20de137a42e0eb5c44f12e602261e6ec1a6c0f";
 
 const currentAddress =
   "0xa0480d4fab208ce268cac8a154f997b6aaf2036a0d9426384072b6b90659341a";
 
-const convertStructure = (oldData) => {
-  return oldData.flatMap((job) =>
-    job.tasks.map((task) => {
+const convertStructure = (oldData, account) => {
+  console.log("Old Data:", oldData); // Log the old data for debugging
+
+  const newData = oldData.flatMap((job) =>
+    job.tasks
+      .filter((task) => !task?.picked_by?.includes(account?.address) && !task.completed)
+      .map((task) => {
       const { question, options, task_id, url, picked_by } = task;
       const isImageType =
         job.type === "image-text" || job.type === "image-image";
@@ -43,167 +50,215 @@ const convertStructure = (oldData) => {
         jobid: parseInt(job.jobId, 10),
         taskid: parseInt(task_id, 10),
         question: {
-          question: isImageType ? question : question,
-          ...(isImageType && { url: url || firstOption }),
+          question: isImageType ? question : question, // Redundant condition, but keeping it for clarity
+          ...(isImageType && { url: url || firstOption }), // Add URL only for image-type jobs
         },
-        options: isImageType ? remainingOptions : options,
+        options: isImageType ? remainingOptions : options, // For image jobs, exclude the first option
         type: job.type,
         isCompleted: task.completed,
         pickedBy: picked_by, // Include picked_by array in the result
       };
     })
   );
+
+  console.log("New Data:", newData); // Log the new converted data for debugging
+
+  return newData;
 };
 
-const saveJobTaskIndex = (walletAddress: string, job_start: number, task_start: number) => {
+
+const saveJobTaskIndex = (
+  walletAddress: string,
+  job_start: number,
+  task_start: number
+) => {
   const data = {
     job_start,
     task_start,
   };
-
 
   localStorage.setItem(walletAddress, JSON.stringify(data));
 };
 
 const getJobTaskIndex = (walletAddress: string) => {
   const data = localStorage.getItem(walletAddress);
-  return data ? JSON.parse(data) : { job_start: 0, task_start: 0 }; 
+  return data ? JSON.parse(data) : { job_start: 0, task_start: 0 };
 };
 
-
 const Dashboard = () => {
-  useEffect(() => {
-    AOS.init({ duration: 300 });
-    console.log("init");
-  }, []);
+  const [api, setApi] = React.useState<CarouselApi>();
+  const [current, setCurrent] = React.useState(0);
+  const [count, setCount] = React.useState(0);
   const { jobs, setJobs, creatorData, setCreatorData } = useCreatorData();
-  const { account, connected, signAndSubmitTransaction } = useWallet();
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const handleOpen = () => setOpen(true);
-  const { toast } = useToast();
 
-  
-const currentJobIndexRef = useRef(0);  
-const currentTaskIndexRef = useRef(0); 
-
-// Main function to fetch jobs and tasks
-const getJobs = async (taskBatchSize = 10) => {
-  if (!account) return [];
-  setLoading(true);
-
-  try {
-    const jobResource = await client.getAccountResource(
-      "0x1dc03758f2c3a17cec451cfef4b7f50fd530c10400731aa2c22abcde7b678bd6",
-      `${moduleAddress}::job_management::JobManagement`
-    );
-
-    const jobHandle = (jobResource as any).data.jobs.handle;
-    const jobCounter = (jobResource as any).data.job_counter;
-
-    if (jobCounter === 0) {
-      setJobs([]); 
+  React.useEffect(() => {
+    if (!api) {
+      console.log("API is not ready yet.");
       return;
     }
 
-    let totalFetchedTasks = 0;
-    let allJobs = [];
+    console.log("API is ready, attaching event listener...");
 
-    // Get saved job/task index from localStorage
-    const { job_start, task_start } = getJobTaskIndex(creatorData?.wallet_address);
+    // Track slide changes
+    api.on("select", () => {
+      const currentSlide = api.selectedScrollSnap() + 1;
+      console.log("Current slide:", currentSlide);
+      console.log("Total count of slides (before fetch):", count);
 
-    let jobIndex = job_start > currentJobIndexRef.current ? job_start : currentJobIndexRef.current;  // Get current job index from ref
-    let taskIndex = task_start > currentTaskIndexRef.current ? task_start : currentTaskIndexRef.current;  // Get current task index from ref
+      // If on the last slide, fetch the next batch of tasks
+      if (!api.canScrollNext()) {
+        // setCurrent(api.scrollSnapList().length);
+        fetchNextBatch(10);
+        api.scrollTo(1, false);
+      }
+    });
+  }, [api, count]);
 
-    let ans = [];
+  const { account, connected, signAndSubmitTransaction } = useWallet();
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loading1, setLoading1] = useState(false);
+  const handleOpen = () => setOpen(true);
+  const { toast } = useToast();
 
-    // Continue fetching tasks until we meet the batch size and filter tasks
-    while (jobIndex < jobCounter && totalFetchedTasks < taskBatchSize && ans.length === 0) {
-      const tableItem = {
-        key_type: "u64",
-        value_type: `${moduleAddress}::job_management::Job`,
-        key: `${jobIndex + 1}`,
-      };
-      const job = await client.getTableItem(jobHandle, tableItem);
+  const currentJobIndexRef = useRef(0);
+  const currentTaskIndexRef = useRef(0);
 
-      const taskHandle = job.tasks.handle;
-      const taskCounter = job.task_counter;
+  // Main function to fetch jobs and tasks
+  const getJobs = async (taskBatchSize = 10) => {
+    if (!account) return [];
+    setLoading1(true);
 
-      // Calculate the number of tasks to fetch from this job
-      const remainingTasksInJob = taskCounter - taskIndex;
-      const tasksToFetch = Math.min(remainingTasksInJob, taskBatchSize - totalFetchedTasks);
-
-      // Fetch tasks starting from the last fetched task index
-      const taskFetchPromises = Array.from(
-        { length: tasksToFetch },
-        (_, index) => {
-          const taskItem = {
-            key_type: "u64",
-            value_type: `${moduleAddress}::job_management::Task`,
-            key: `${taskIndex + index + 1}`,
-          };
-          return client.getTableItem(taskHandle, taskItem);
-        }
+    try {
+      const jobResource = await client.getAccountResource(
+        "0x1dc03758f2c3a17cec451cfef4b7f50fd530c10400731aa2c22abcde7b678bd6",
+        `${moduleAddress}::job_management::JobManagement`
       );
 
-      const tasks = await Promise.all(taskFetchPromises);
-      totalFetchedTasks += tasks.length;
+      const jobHandle = (jobResource as any).data.jobs.handle;
+      const jobCounter = (jobResource as any).data.job_counter;
 
-      // Push job data with tasks into allJobs array
-      allJobs.push({
-        creator: job.creator,
-        jobId: job.job_id,
-        taskCounter: job.task_counter,
-        tasks: tasks,
-        amount: job.amount,
-      });
+      if (jobCounter === 0) {
+        setJobs([]);
+        return;
+      }
 
-      // Filter tasks based on the condition
+      let totalFetchedTasks = 0;
+      let allJobs = [];
 
-      ans = allJobs
-        .flatMap((job) => job.tasks)
-        .filter((task) => 
-          !(task?.picked_by?.includes(account?.address)) && !(task.completed)
+      // Get saved job/task index from localStorage
+      const { job_start, task_start } = getJobTaskIndex(account?.address);
+
+      let jobIndex =
+        job_start > currentJobIndexRef.current
+          ? job_start
+          : currentJobIndexRef.current; // Get current job index from ref
+      let taskIndex =
+        task_start > currentTaskIndexRef.current
+          ? task_start
+          : currentTaskIndexRef.current; // Get current task index from ref
+
+      let ans = [];
+      // Continue fetching tasks until we meet the batch size and filter tasks
+      while (
+        jobIndex < jobCounter &&
+        totalFetchedTasks < taskBatchSize &&
+        ans.length === 0
+      ) {
+        const tableItem = {
+          key_type: "u64",
+          value_type: `${moduleAddress}::job_management::Job`,
+          key: `${jobIndex + 1}`,
+        };
+        const job = await client.getTableItem(jobHandle, tableItem);
+
+        const taskHandle = job.tasks.handle;
+        const taskCounter = job.task_counter;
+
+        console.log("JOb",job);
+
+        // Calculate the number of tasks to fetch from this job
+        const remainingTasksInJob = taskCounter - taskIndex;
+        const tasksToFetch = Math.min(
+          remainingTasksInJob,
+          taskBatchSize - totalFetchedTasks
         );
 
-      // If no valid tasks found, fetch from the next job
-      taskIndex += tasksToFetch;
-      if (taskIndex >= taskCounter) {
-        jobIndex++;  // Move to the next job
-        taskIndex = 0;  // Reset task index for the new job
-      }
-      
-      currentJobIndexRef.current = jobIndex;  // Update the current job index in the ref
-      currentTaskIndexRef.current = taskIndex;  // Update the current task index in the ref
-      // Save the job and task index in local storage if there are no tasks to process
-      if (ans.length === 0) {
-        saveJobTaskIndex(account?.address, jobIndex, taskIndex);
-      }
-    }
+        // Fetch tasks starting from the last fetched task index
 
-    // If there are filtered tasks, append the fetched jobs
-    if (ans.length > 0) {
-      setJobs((prevJobs : Array<any>) => [...allJobs]);
-    }
+        console.log("fetch", jobIndex," ",taskIndex)
+        const taskFetchPromises = Array.from(
+          { length: tasksToFetch },
+          (_, index) => {
+            const taskItem = {
+              key_type: "u64",
+              value_type: `${moduleAddress}::job_management::Task`,
+              key: `${taskIndex + index + 1}`,
+            };
+            return client.getTableItem(taskHandle, taskItem);
+          }
+        );
+
+        const tasks = await Promise.all(taskFetchPromises);
+        totalFetchedTasks += tasks.length;
+
+        // Push job data with tasks into allJobs array
+        allJobs.push({
+          creator: job.creator,
+          jobId: job.job_id,
+          taskCounter: job.task_counter,
+          tasks: tasks,
+          amount: job.amount,
+        });
+
+        // Filter tasks based on the condition
+
+        ans = convertStructure(allJobs, account);
+
+        // If no valid tasks found, fetch from the next job
+        taskIndex += tasksToFetch;
+        if (taskIndex >= taskCounter) {
+          jobIndex++; // Move to the next job
+          taskIndex = 0; // Reset task index for the new job
+        }
+
+        currentJobIndexRef.current = jobIndex; // Update the current job index in the ref
+        currentTaskIndexRef.current = taskIndex; // Update the current task index in the ref
+        // Save the job and task index in local storage if there are no tasks to process
+        if (ans.length === 0) {
+          saveJobTaskIndex(account?.address, jobIndex, taskIndex);
+        }
+      }
+
+      if (ans.length > 0) {
+        setQuestions((prev) => [...ans]);        
+        setJobs((prevJobs: Array<any>) => allJobs);
+      }
+      else{
+        setQuestions([]);
+      }
       console.log(ans, "ans");
       console.log("Fetched jobs and tasks:", allJobs);
-      console.log(jobIndex, taskIndex, job_start, task_start, "jobIndex, taskIndex");
-    setLoading(false);
-
-  } catch (error) {
-    console.error(error);
-    setLoading(false);
-  }
-};
-
-
+      console.log(
+        jobIndex,
+        taskIndex,
+        job_start,
+        task_start,
+        "jobIndex, taskIndex"
+      );
+      setLoading1(false);
+    } catch (error) {
+      console.error(error);
+      setLoading1(false);
+    }
+  };
 
   const getUserProfile = async (address: string | undefined) => {
     if (!address) {
       console.log("Address is not valid");
       return null;
     }
-    setLoading(true);
+
     const payload = {
       function: `${moduleAddress}::user_registry::get_user_profile`,
       type_arguments: [],
@@ -211,28 +266,29 @@ const getJobs = async (taskBatchSize = 10) => {
     };
     try {
       const userData = await client.view(payload);
-      setLoading(false);
       // console.log(userData);
       return userData;
     } catch (error) {
       console.log(error);
-      setLoading(false);
       return null;
     }
   };
 
-  const fetchNextBatch = (numberOfTasks : number) => {
-    getJobs(numberOfTasks);  // Fetch the next batch of tasks
+  const fetchNextBatch = (numberOfTasks: number) => {
+    console.log("fetching.....");
+    getJobs(numberOfTasks); // Fetch the next batch of tasks
   };
 
   useEffect(() => {
     if (connected) {
+      setLoading(true);
       getUserProfile(account?.address).then((res) => {
         console.log(res);
         setCreatorData(res ? res[0] : null);
         if (res === null) handleOpen();
+        setLoading(false);
       });
-      if(jobs.length === 0){
+      if (jobs.length === 0) {
         getJobs();
       }
     }
@@ -240,13 +296,13 @@ const getJobs = async (taskBatchSize = 10) => {
 
   // const questions = convertStructure(jobs);
 
+  const [questions, setQuestions] = useState([]);
 
-  const [questions,setQuestions] = useState([]);
-
-  useEffect(()=>{
-    setQuestions(convertStructure(jobs));
-
-  },[jobs])
+  // useEffect(() => {
+  //   console.log(jobs, "ejobs");
+  //   const converted = convertStructure(jobs);
+  //   setQuestions(converted);
+  // }, [jobs]);
 
   // Store selected answers for each question as an array (to support multiple answers)
   const [selectedAnswers, setSelectedAnswers] = useState<{
@@ -293,7 +349,7 @@ const getJobs = async (taskBatchSize = 10) => {
         functionArguments: [jobId, taskId, options],
       },
     };
-    console.log(transaction.data)
+    console.log(transaction.data);
     try {
       const response = await signAndSubmitTransaction(transaction);
       console.log("Created.", response);
@@ -309,7 +365,7 @@ const getJobs = async (taskBatchSize = 10) => {
         console.log(res);
         setCreatorData(res ? res[0] : null);
         // if (res === null) handleOpen();
-      })
+      });
     } catch (error) {
       toast({
         variant: "destructive",
@@ -376,32 +432,28 @@ const getJobs = async (taskBatchSize = 10) => {
     </div>
   ) : (
     <div className="flex flex-col items-center w-full h-full">
+      <div className="absolute top-5 right-[250px] flex justify-end w-[60%] items-center">
+        <h1 className=" text-xl flex items-center font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-blue-500 shadow-md mr-[30px]">
+          <span className="text-white">Reputation: </span>
 
+          <span className="ml-2 text-2xl">
+            {
+              creatorData.reputation_points > 0 ? (
+                "⭐".repeat(creatorData.reputation_points) // Render stars based on reputation score
+              ) : (
+                <span className="text-red-500 text-xl ">User Banned</span>
+              ) // Show 'User Banned' if score is 0
+            }
+          </span>
+        </h1>
 
-
-<div className="absolute top-5 right-[250px] flex justify-end w-[60%] items-center">
-
-<h1 className=" text-xl flex items-center font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-blue-500 shadow-md mr-[30px]">
-  <span className="text-white">Reputation: </span>
-  
-  <span className="ml-2 text-2xl">
-    {creatorData.reputation_points > 0 
-      ? "⭐".repeat(creatorData.reputation_points)  // Render stars based on reputation score
-      : <span className="text-red-500 text-xl ">User Banned</span>  // Show 'User Banned' if score is 0
-    }
-  </span>
-</h1>
-
-<h1 className="text-xl font-bold shadow-md">
-  <span className="text-white">Balance:</span> <span className="ml-2 text-green-500">{creatorData.balance / 1e8} APT</span>
-</h1>
-
-
-
-</div>
-
-
-
+        <h1 className="text-xl font-bold shadow-md">
+          <span className="text-white">Balance:</span>{" "}
+          <span className="ml-2 text-green-500">
+            {creatorData.balance / 1e8} APT
+          </span>
+        </h1>
+      </div>
 
       <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-neutral-900 flex justify-center items-center flex-col gap-2 flex-1 w-full h-full">
         <div className="flex gap-2 flex-1 justify-center min-h-[500px] w-full max-w-[76%]">
@@ -409,11 +461,20 @@ const getJobs = async (taskBatchSize = 10) => {
             <div className="w-full ml-8 -mt-15 mb-5 text-4xl">
               <h1>Tasks</h1>
             </div>
-                
-            
-            <Carousel className="w-full max-w-[800px]">
+
+            <Carousel
+              className="w-full max-w-[800px] relative"
+              //  onSlideChange={handleSlideChange}
+              setApi={setApi}
+            >
+              {loading1 &&  <div className="absolute top-0 left-0 h-full w-full bg-blue-500" style={{zIndex:100}}>
+
+
+
+</div>}
               <CarouselContent>
                 {/* Disclaimer Carousel Item */}
+               
                 <CarouselItem>
                   <div className="p-1">
                     <Card className="border-none rounded-lg">
@@ -440,14 +501,22 @@ const getJobs = async (taskBatchSize = 10) => {
                   </div>
                 </CarouselItem>
 
-                {console.log(questions, "questions")}
+                {/* {console.log(questions
+                  .filter(
+                    (e) =>
+                      !e?.pickedBy?.includes(account?.address) &&
+                      !e?.isCompleted
+                  ), "questions")} */}
                 {/* {console.log(currentAddress, "currentAddress")} */}
-                
+
                 {/* Questions Carousel Items */}
                 {questions
-                  .filter((e) => ((!(e?.pickedBy?.includes(account?.address)) && !(e?.isCompleted))))
+                  .filter(
+                    (e) =>
+                      !e?.pickedBy?.includes(account?.address) &&
+                      !e?.isCompleted
+                  )
                   .map((questionObj, questionIndex: number) => (
-
                     <CarouselItem key={questionIndex}>
                       <div className="p-1">
                         <Card className="border-none rounded-lg">
@@ -456,10 +525,13 @@ const getJobs = async (taskBatchSize = 10) => {
                               {/* Question Display */}
                               <div className="my-6">
                                 <label className="text-white mb-4 block text-lg font-semibold">
-                                
-                                {/* {JSON.stringify(questionObj.isCompleted)} */}
-                                {String(questionObj?.isCompleted)}
-                                {String(questionObj?.pickedBy?.includes(account?.address))}
+                                  {/* {JSON.stringify(questionObj.isCompleted)} */}
+                                  {String(questionObj?.isCompleted)}
+                                  {String(
+                                    questionObj?.pickedBy?.includes(
+                                      account?.address
+                                    )
+                                  )}
                                   Q{questionIndex + 1}:{" "}
                                   {questionObj.question.question}
                                 </label>
@@ -561,29 +633,45 @@ const getJobs = async (taskBatchSize = 10) => {
                   <div className="p-1">
                     <Card className="border-none">
                       <CardContent className="flex h-[400px] items-center justify-center p-6 dark:bg-neutral-800 border-none rounded-lg">
-                        <div className="bg-neutral-800 h-[350px] w-full p-4 rounded-lg overflow-auto flex flex-col items-center justify-center">
-                          <h2 className="text-white text-2xl mb-4">
-                            Task Ended
-                          </h2>
-                          <p className="text-gray-400 mb-6 text-center">
-                            You have completed all tasks. Please refresh the
-                            page to check for new tasks or updates.
-                          </p>
-                          <button
-                            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                            onClick={() => {fetchNextBatch(10)}}
-                          >
-                            Refresh
-                          </button>
-                        </div>
+                        {!loading1 ? (
+                          <div className="bg-neutral-800 h-[350px] w-full p-4 rounded-lg overflow-auto flex flex-col items-center justify-center">
+                            <h2 className="text-white text-2xl mb-4">
+                              Task Ended
+                            </h2>
+                            <p className="text-gray-400 mb-6 text-center">
+                              You have completed all tasks. Please refresh the
+                              page to check for new tasks or updates.
+                            </p>
+                            <button
+                              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                              onClick={() => {
+                                handleRefresh()
+                              }}
+                            >
+                              Refresh
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center h-full">
+                            <img
+                              src="/assets/loading.gif"
+                              alt=""
+                              className="h-[80px]"
+                            />
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </div>
                 </CarouselItem>
               </CarouselContent>
+             {!loading1 && <>
               <CarouselPrevious />
               <CarouselNext />
+             </>}
             </Carousel>
+
+
           </div>
         </div>
       </div>

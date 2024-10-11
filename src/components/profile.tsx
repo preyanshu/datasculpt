@@ -16,7 +16,7 @@ const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const client = new AptosClient(NODE_URL);
 
 const moduleAddress =
-  "0x3345aa79df67a6e958da1693380a2bbef9882fc309da10564bcbe6dcdcf0d801";
+  "0x57bbd67464830f3ea4464b4e2e20de137a42e0eb5c44f12e602261e6ec1a6c0f";
 
 // Convert the old structure to the new one
 const convertToNewStructure = (oldJobs) => {
@@ -148,7 +148,7 @@ const Dashboard = () => {
     }
   };
   useEffect(() => {
-    if (connected && creatorData === null) {
+    if (connected) {
       getUserProfile(account?.address).then((res) => {
         console.log(res);
         setCreatorData(res ? res[0]: null);
@@ -215,7 +215,7 @@ const Dashboard = () => {
       value: "completed",
       content: (
         <div
-          className="w-full overflow-hidden relative h-[600px] rounded-2xl p-10 text-white bg-neutral-800"
+          className="w-full overflow-hidden relative h-[480px] rounded-2xl p-10 text-white bg-neutral-800"
           style={{ marginTop: "-100px" }}
         >
           {completedJobs.length > 0 ? (

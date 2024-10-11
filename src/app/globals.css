@@ -60,9 +60,27 @@
   }
 }
 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
 
 @layer utilities {
-  /* Custom scrollbar styles */
+  .step {
+    counter-increment: step;
+  }
+
+  .step:before {
+    @apply absolute w-8 h-8 bg-muted rounded-full font-medium text-center text-base inline-flex items-center justify-center -indent-px;
+    @apply ml-[-41px];
+    content: counter(step);
+  }
+
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
@@ -82,7 +100,8 @@
   }
 }
 
-body{
-  overflow-y: scroll;
+@media (max-width: 640px) {
+  .container {
+    @apply px-4;
+  }
 }
-
