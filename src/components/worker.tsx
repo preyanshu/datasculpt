@@ -23,6 +23,7 @@ import { count, log } from "console";
 import { parse, stringify } from "querystring";
 import { on } from "events";
 import { type } from "os";
+import { useRouter } from "next/navigation";
 
 const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const client = new AptosClient(NODE_URL);
@@ -90,6 +91,7 @@ const Dashboard = () => {
   const [current, setCurrent] = React.useState(0);
   const [count, setCount] = React.useState(0);
   const { jobs, setJobs, creatorData, setCreatorData } = useCreatorData();
+  const router = useRouter();
 
   React.useEffect(() => {
     if (!api) {
@@ -294,6 +296,12 @@ const Dashboard = () => {
     }
   }, [account, open, connected]);
 
+  useEffect(() => {
+    if(creatorData?.role=="1"){
+      router.push("/creators/tasks")
+    }
+  }, [creatorData]);
+
   // const questions = convertStructure(jobs);
 
   const [questions, setQuestions] = useState([]);
@@ -425,11 +433,7 @@ const Dashboard = () => {
       </div>
     </div>
   ) : creatorData?.role === "1" ? (
-    <div className="flex flex-col items-center justify-center h-full">
-      <h1 className="text-3xl font-semibold text-center">
-        You are a Creator. Please switch to Worker to proceed
-      </h1>
-    </div>
+    null
   ) : (
     <div className="flex flex-col items-center w-full h-full">
       <div className="absolute top-5 right-[250px] flex justify-end w-[60%] items-center">

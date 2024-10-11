@@ -168,12 +168,14 @@ export const ModalFooter = ({
   children: ReactNode;
   className?: string;
 }) => {
+  const { setOpen } = useModal();
   return (
     <div
       className={cn(
         "flex justify-end p-4 bg-gray-100 dark:bg-neutral-900",
         className
       )}
+      onClick={() => setOpen(false)}
     >
       {children}
     </div>

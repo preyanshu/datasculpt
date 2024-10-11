@@ -11,6 +11,7 @@ import {
 } from "@aptos-labs/wallet-adapter-react";
 import Register from "./Register";
 import { Button } from "./ui/button";
+import { useRouter } from "next/navigation";
 
 const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const client = new AptosClient(NODE_URL);
@@ -50,6 +51,7 @@ const Dashboard = () => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const handleOpen = () => setOpen(true);
+  const router = useRouter()
 
   const getJobs = async () => {
     if (!account) return [];
@@ -162,6 +164,10 @@ const Dashboard = () => {
 
   useEffect(() => {
     // Convert jobs to the new structure
+
+    if(creatorData?.role === "2"){
+      router.push("/worker/tasks")
+    }
     const newJobs = convertToNewStructure(jobs || []);
     
     // Calculate total jobs created, pending, and completed
@@ -258,15 +264,7 @@ const Dashboard = () => {
     );
   }
 
-  if(creatorData?.role === "2"){
-    return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <h1 className="text-3xl font-semibold text-center">
-          You are a Worker. Please switch to Creator to proceed
-        </h1>
-      </div>
-    );
-  }
+
 
   return (
     <div className="flex flex-col items-center w-full h-full p-4 md:p-10">
