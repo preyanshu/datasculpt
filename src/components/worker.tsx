@@ -588,8 +588,8 @@ const Dashboard = () => {
                                             }
                                             className="mr-4 hidden"
                                           />
-                                          {questionObj.type === "text-text" ||
-                                          questionObj.type === "text-image" ? (
+                                          {questionObj?.type === "image-image" ||
+                                          questionObj?.type === "text-image" ? (
                                             <img
                                               src={option}
                                               alt={`Option ${optionIndex + 1}`}

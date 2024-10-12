@@ -15,6 +15,8 @@ import {
 import { AptosClient } from "aptos";
 import { useToast } from "./ui/use-toast";
 import { useModal } from "@/components/ui/animated-modal";
+import { map } from "framer-motion/client";
+import { url } from "inspector";
 
 const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const client = new AptosClient(NODE_URL);
@@ -54,15 +56,23 @@ export const AnimatedModalDemo: React.FC<AnimatedModalDemoProps> = ({
   const isPredefined = predefinedQuestions.every(
     (question) => question.answers && question.answers.length >= 0
   );
-  const questions = predefinedQuestions.map((question) => {
-    return question.question.question;
-  });
-  const answers = predefinedQuestions.map((question) => {
-    return question.options;
-  });
-  const preanswers = predefinedQuestions.map((question) => {
-    return question.answers;
-  });
+  const isImageType = questionType === "image-image" || questionType === "image-text";
+
+const questions = predefinedQuestions.map((question) => {
+  return question.question.question;
+});
+
+const answers = predefinedQuestions.map((question) => {
+  if (isImageType && question.question.url) {
+    // Add the image URL as the first option if it's an image-based question
+    return [question.question.url, ...question.options];
+  }
+  return question.options;
+});
+
+const preanswers = predefinedQuestions.map((question) => {
+  return question.answers;
+});
 
   // console.log(questions, answers, "p",preanswers);
   const createJob = async () => {
