@@ -42,7 +42,7 @@ const convertStructure = (oldData, account) => {
       .map((task) => {
       const { question, options, task_id, url, picked_by } = task;
       const isImageType =
-        job.type === "image-text" || job.type === "image-image";
+        job.job_type === "image-text" || job.job_type === "image-image";
       const firstOption = options[0];
       const remainingOptions = options.slice(1);
 
@@ -54,7 +54,7 @@ const convertStructure = (oldData, account) => {
           ...(isImageType && { url: url || firstOption }), // Add URL only for image-type jobs
         },
         options: isImageType ? remainingOptions : options, // For image jobs, exclude the first option
-        type: job.type,
+        type: job.job_type,
         isCompleted: task.completed,
         pickedBy: picked_by, // Include picked_by array in the result
       };
@@ -123,6 +123,7 @@ const Dashboard = () => {
 
   const currentJobIndexRef = useRef(0);
   const currentTaskIndexRef = useRef(0);
+  let allBatchesEmpty = true;
 
   // Main function to fetch jobs and tasks
   const getJobs = async (taskBatchSize = 10) => {
@@ -209,11 +210,16 @@ const Dashboard = () => {
           taskCounter: job.task_counter,
           tasks: tasks,
           amount: job.amount,
+          job_type: job.job_type,
         });
 
         // Filter tasks based on the condition
 
         ans = convertStructure(allJobs, account);
+        console.log(ans.length)
+        if (ans.length > 0) {
+          allBatchesEmpty = false;
+        }
 
         // If no valid tasks found, fetch from the next job
         taskIndex += tasksToFetch;
@@ -225,7 +231,8 @@ const Dashboard = () => {
         currentJobIndexRef.current = jobIndex; // Update the current job index in the ref
         currentTaskIndexRef.current = taskIndex; // Update the current task index in the ref
         // Save the job and task index in local storage if there are no tasks to process
-        if (ans.length === 0) {
+        if (allBatchesEmpty && ans.length === 0) {
+          console.log(allBatchesEmpty, "allBatchesEmpty in side");
           saveJobTaskIndex(account?.address, jobIndex, taskIndex);
         }
       }
@@ -237,7 +244,7 @@ const Dashboard = () => {
       else{
         setQuestions([]);
       }
-      console.log(ans, "ans");
+      console.log(ans, allBatchesEmpty, "ans");
       console.log("Fetched jobs and tasks:", allJobs);
       console.log(
         jobIndex,
