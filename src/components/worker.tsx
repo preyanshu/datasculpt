@@ -281,6 +281,8 @@ const Dashboard = () => {
   };
 
   const fetchNextBatch = (numberOfTasks: number) => {
+    setSelectedAnswers({}); // Reset selected answers
+    setSubmittedQuestions({}); // Reset submitted questions
     console.log("fetching.....");
     getJobs(numberOfTasks); // Fetch the next batch of tasks
   };
