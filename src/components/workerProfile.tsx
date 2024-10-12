@@ -40,7 +40,7 @@ function convertTaskData(inputArray, currentAddress) {
   console.log(inputArray, "inp");
   return inputArray.flatMap((item) =>
     item.tasks
-      .filter((task) => task.picked_by.includes(currentAddress)) 
+      // .filter((task) => task.picked_by.includes(currentAddress)) 
       .map((task) => ({
         id: parseInt(item.jobId), // Convert jobId to number for id
         title: `Job ${item.jobId} Task ${task.task_id}`, // Use task_id for title
@@ -84,12 +84,15 @@ const Dashboard = () => {
 
   const currentJobIndexRef = useRef(0);
   const currentTaskIndexRef = useRef(0);
+  const maxJobsRef = useRef(0);
 
   // Main function to fetch jobs and tasks
   const getJobs = async (direction: "next" | "previous") => {
     if (!account) return [];
     setLoadingJob(true);
-  
+
+    console.log(currentJobIndexRef.current, Number(maxJobsRef.current), "Number equal")
+    
     try {
       const jobResource = await client.getAccountResource(
         "0x1dc03758f2c3a17cec451cfef4b7f50fd530c10400731aa2c22abcde7b678bd6",
@@ -106,11 +109,13 @@ const Dashboard = () => {
       console.log("first", currIdxRef.current);
       let totalFetchedTasks = 0;
       let allJobs = [];
+      maxJobsRef.current = jobCounter;
   
       let jobIndex = currentJobIndexRef.current; // Get current job index from ref
       let taskIndex = currentTaskIndexRef.current; // Get current task index from ref
   
       if (direction === "next") {
+        console.log(Number(maxJobsRef.current) === currentJobIndexRef.current, "maxJobs");
         // Check if there is already cached data in prevState
         if (prevState.length > currIdxRef.current+1) {
             setCompletedTasks(prevState[currIdxRef.current+1]);
@@ -134,7 +139,6 @@ const Dashboard = () => {
     }
   
       let ans = [];
-  
       // Continue fetching tasks until we meet the batch size and filter tasks
       while (jobIndex < jobCounter && ans.length < 4) {
         const tableItem = {
@@ -149,10 +153,14 @@ const Dashboard = () => {
   
         // Calculate the number of tasks to fetch from this job
         const remainingTasksInJob = taskCounter - taskIndex;
-  
+        const tasksNeeded = 4 - ans.length;
+
+        // Fetch tasks starting from the last fetched task index, but not more than needed
+        const tasksToFetch = Math.min(remainingTasksInJob, tasksNeeded);
+        
         // Fetch tasks starting from the last fetched task index
         const taskFetchPromises = Array.from(
-          { length: remainingTasksInJob },
+          { length: tasksToFetch },
           (_, index) => {
             const taskItem = {
               key_type: "u64",
@@ -179,7 +187,7 @@ const Dashboard = () => {
         ans = convertTaskData(allJobs, account?.address);
   
         // If no valid tasks found, fetch from the next job
-        taskIndex += remainingTasksInJob;
+        taskIndex += tasksToFetch;
         if (taskIndex >= taskCounter) {
           jobIndex++; // Move to the next job
           taskIndex = 0; // Reset task index for the new job
@@ -197,7 +205,7 @@ const Dashboard = () => {
         setCompletedTasks(ans);        
         // Use function form of setState to ensure latest prevState is used
         setPrevState((prev) => [...prevState, ans]);
-        ans.length > 0 && (currIdxRef.current = prevState.length);
+        currIdxRef.current = prevState.length;
         console.log("next", currIdxRef.current);
       }
   
@@ -318,7 +326,7 @@ const Dashboard = () => {
           </div>
           <div className="w-full flex">
             <button className="ml-auto px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg shadow-md hover:from-blue-500 hover:to-blue-700 transition-all" disabled={currIdxRef.current === 0} onClick={() => getJobs('previous')}>previous</button>
-            <button className="ml-auto px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg shadow-md hover:from-blue-500 hover:to-blue-700 transition-all" disabled={completedTasks.length === 0} onClick={() => getJobs('next')}>next</button>
+            <button className="ml-auto px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg shadow-md hover:from-blue-500 hover:to-blue-700 transition-all" disabled={currentJobIndexRef.current == Number(maxJobsRef.current)} onClick={() => getJobs('next')}>next</button>
           </div>
           <div className="h-[40px]"></div>
         </>
