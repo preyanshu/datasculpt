@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ModalProvider } from "@/components/ui/animated-modal";
 import router, { usePathname } from 'next/navigation';
 import style from "styled-jsx/style";
+import { CreatorProvider } from "@/context/creatorContext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -40,13 +41,14 @@ export default function RootLayout({
       }}
       >
      
-       
+          <CreatorProvider>
           <ModalProvider>
           <WalletProvider>
             {children}
             <Toaster />
           </WalletProvider>
           </ModalProvider>
+          </CreatorProvider>
 
        
 

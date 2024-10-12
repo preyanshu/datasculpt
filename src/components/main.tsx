@@ -1,5 +1,6 @@
 'use client'
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation"; // Import useRouter from Next.js
 import { FloatingDockDemo } from "./floating-dock";
 import { FileUploadDemo } from "./file-upload";
 import { AnimatedModalDemo } from "./modal";
@@ -33,6 +34,7 @@ const getRandomQuestionsForVerification = (questions: QuestionSet[]) => {
 };
 
 const Dashboard = () => {
+  const router = useRouter(); // Initialize useRouter for navigation
   const [step, setStep] = useState(1);
   const [numberOfTasks, setNumberOfTasks] = useState(0); // Number of extracted data
   const [peoplePerTask, setPeoplePerTask] = useState(1); // Slider value
@@ -63,7 +65,6 @@ const Dashboard = () => {
     }
     try {
       const userData = await client.view(payload);
-      // console.log(userData);
       setLoading(false);
       return userData;
     } catch (error) {
@@ -80,17 +81,13 @@ const Dashboard = () => {
         setCreatorData(res ? res[0] : null);
         if(res === null)handleOpen();
       })
-      // getJobs();
     }
   }, [account, open, connected]);
 
   useEffect(() => {
-    // Whenever questions change, filter a random set of them for verification
     if (questions.length > 0) {
       const randomQuestions = getRandomQuestionsForVerification(questions);
       setFilteredQuestions(randomQuestions);
-
-      // Initialize predefined answers for user input
       setPredefinedQuestions(questions.map(q => ({ ...q, answers: [] })));
     }
   }, [questions]);
@@ -120,8 +117,7 @@ const Dashboard = () => {
   };
 
   const handleQuestionTypeChange = (type: string) => {
-    setFiles([]); 
-    setStep(1); // Reset to step 1
+    setStep(1); 
     setSelectedQuestionType(type);
   };
 
@@ -133,7 +129,7 @@ const Dashboard = () => {
             const [question, ...options] = row as string[];
 
             if (selectedQuestionType === "image-text" || selectedQuestionType === "image-image") {
-              const imageUrl = options.shift(); // Extract the image URL if applicable
+              const imageUrl = options.shift(); 
               return {
                 question: { question, url: imageUrl || "" },
                 options: options,
@@ -146,11 +142,10 @@ const Dashboard = () => {
             };
           });
 
-          // Filter out any entries that do not have a question
           const filteredQuestions = questions.filter((q) => q.question.question);
           resolve(filteredQuestions);
         },
-        header: false, // Set to true if your CSV has headers
+        header: false,
         skipEmptyLines: true,
         error: (error: any) => {
           reject(error);
@@ -201,12 +196,12 @@ const Dashboard = () => {
       return (
         <div className="my-3">
           <button onClick={()=>{
-            console.log("userAnswers",predefinedQuestions)
-            console.log("questions",questions)
+            console.log("userAnswers",predefinedQuestions);
+            console.log("questions",questions);
           }}>
           </button>
           <QuestionVerification
-            questions={filteredQuestions} // Send only filtered random questions
+            questions={filteredQuestions} 
             onProceed={() => console.log("Proceed")}
             questionType={selectedQuestionType}
             userAnswers={predefinedQuestions}
@@ -216,7 +211,8 @@ const Dashboard = () => {
       );
     }
   };
-  if(loading){
+
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
         <img src="/assets/loading.gif" alt="" className="h-[80px]" />
@@ -233,24 +229,22 @@ const Dashboard = () => {
       </div>
     );
   }
-  return creatorData === null ? 
-  <div className="h-full flex flex-col gap-4 justify-center items-center">
-    {/* <h1>Please register to continue....</h1>
-    <Button color="primary" className="hover:pointer" onClick={handleOpen}>
-        Register
-    </Button> */}
-    <Register open={open} setOpen={setOpen} user={"creator"}/>
-  </div> 
-  : 
-  (creatorData?.role === "2") ?
-     (
-      <div className="flex flex-col items-center justify-center h-full">
-        <h1 className="text-3xl font-semibold text-center">
-          You are a Worker. Please switch to Creator to proceed
-        </h1>
+
+  if (creatorData === null) {
+    return (
+      <div className="h-full flex flex-col gap-4 justify-center items-center">
+        <Register open={open} setOpen={setOpen} user={"creator"}/>
       </div>
-    )
-  : (
+    );
+  } 
+
+  // Redirect worker users to /worker/tasks
+  if (creatorData?.role === "2") {
+    router.push("/worker/tasks");
+    return null; // Prevent rendering anything else after redirection
+  }
+
+  return (
     <div className="flex flex-1">
       <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-neutral-900 flex justify-center items-center flex-col gap-2 flex-1 w-full h-full">
         <FloatingDockDemo setSelectedQuestionType={handleQuestionTypeChange} />

@@ -106,12 +106,13 @@ const preanswers = predefinedQuestions.map((question) => {
       setOpen(false);
     } catch (error) {
       console.log(error, "failed to job");
-      setOpen(false);
+    
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to create job.",
       });
+      setOpen(false);
     }
   };
 
@@ -120,7 +121,7 @@ const preanswers = predefinedQuestions.map((question) => {
       <Modal>
         <ModalTrigger
           className="bg-black dark:bg-white dark:text-black text-white flex justify-center group/modal-btn relative"
-          predefined={isPredefined} // Set dynamically based on questions
+          predefined={isPredefined}
         >
           <span className="group-hover/modal-btn:translate-x-40 text-center transition duration-500">
             Review Details

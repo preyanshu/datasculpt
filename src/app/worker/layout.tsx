@@ -26,6 +26,7 @@ import type { Metadata } from "next";
 import { CreatorProvider } from "@/context/creatorContext";
 import Header from "@/components/Header";
 import { MoveValue } from "@aptos-labs/ts-sdk";
+import { useCreatorData } from "@/context/creatorContext";
 
 const links = [
   {
@@ -69,6 +70,21 @@ export default function RootLayout({
 }>) {
   const [open, setOpen] = useState(false);
   const { connected } = useWallet();
+
+  const creatorData = useCreatorData();
+
+
+  const getAvatar = () => {
+
+    if (creatorData?.name) {
+      // Generate placeholder avatar using the first letter of the name
+      const firstLetter = creatorData.name.charAt(0).toUpperCase();
+      return `https://ui-avatars.com/api/?name=${firstLetter}&background=random&color=fff&size=128`;
+    }
+  
+    // Fallback URL for an anonymous user (if name is missing)
+    return "https://ui-avatars.com/api/?name=.&background=fef&color=fff&size=128";
+  };
   // const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   return (
@@ -90,20 +106,20 @@ export default function RootLayout({
                     </div>
                   </div>
                   <SidebarLink
-                    link={{
-                      label: "Manu Arora",
-                      href: "#",
-                      icon: (
-                        <Image
-                          src="https://assets.aceternity.com/manu.png"
-                          className="h-7 w-7 flex-shrink-0 rounded-full"
-                          width={50}
-                          height={50}
-                          alt="Avatar"
-                        />
-                      ),
-                    }}
-                  />
+                  link={{
+                    label:  " " + (creatorData?.name || "--"), //get this label for creatorprovider from creator data
+                    href: "/",
+                    icon: (
+                      <Image
+                        src={getAvatar()}
+                        className="h-7 w-7 flex-shrink-0 rounded-full"
+                        width={50}
+                        height={50}
+                        alt="Avatar"
+                      />
+                    ),
+                  }}
+                />
                 </SidebarBody>
               </Sidebar>
               {/* Content */}
@@ -115,9 +131,9 @@ export default function RootLayout({
                     <div className="flex flex-col items-center justify-center h-full">
                             <dotlottie-player src="https://lottie.host/375e2e48-5819-4d6d-a691-6eada5678aae/ljUkjBwWMB.json" background="transparent" speed="1" style={{width: "250px", height: "250px"}} direction="1" playMode="normal" autoplay></dotlottie-player>
                         
-                      <h1 className="text-3xl font-semibold text-center">
-                      🛠️ <b>Wallet needed!</b> <br/>
-                      <span className="text-xl ml-[30px]">Connect it and you're all set!</span>
+                      <h1 className="text-3xl  text-center">
+                      <b>Wallet needed!</b> <br/>
+
                       </h1>
                   </div>
                 )}

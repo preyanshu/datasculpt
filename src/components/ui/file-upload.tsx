@@ -1,8 +1,9 @@
 import { cn } from "@/lib/utils";
-import React, { useRef,useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { IconUpload } from "@tabler/icons-react";
 import { useDropzone } from "react-dropzone";
+import {useRouter} from "next/navigation";
 
 const mainVariant = {
   initial: {
@@ -36,12 +37,13 @@ export const FileUpload = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(()=>{
-    
-      console.log("files",files);
-   
-  }
-  ,[files])
+  // This effect runs whenever selectedQuestionType changes and resets the files
+  useEffect(() => {
+    // Reset files to an empty array when the selected question type changes
+    if (onChange) {
+      onChange([]);
+    }
+  }, [selectedQuestionType]);
 
   const handleFileChange = (newFiles: File[]) => {
     onChange && onChange(newFiles);
@@ -50,6 +52,7 @@ export const FileUpload = ({
   const handleClick = () => {
     fileInputRef.current?.click();
   };
+
 
   const { getRootProps, isDragActive } = useDropzone({
     multiple: true,
@@ -63,8 +66,18 @@ export const FileUpload = ({
     },
   });
 
+  const router = useRouter()
+
+  const handleCSVExample = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Navigate programmatically using router.push
+    window.open("/path-to-csv-example", "_blank"); // Replace with the correct path
+  };
+
   return (
-    <div className="w-full" {...getRootProps()}>
+    <div key={selectedQuestionType} className="w-full" {...getRootProps()}>
       <motion.div
         onClick={handleClick}
         whileHover="animate"
@@ -83,18 +96,16 @@ export const FileUpload = ({
           <p className="relative z-20 font-sans font-bold text-neutral-700 dark:text-neutral-300 text-base">
             Upload CSV
           </p>
-          <p className="relative z-20 font-sans font-normal text-neutral-400 dark:text-neutral-400 text-base mt-2">
-            {1 && (
-              <a
-                href="1"
-                className="text-sky-500 mt-2"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                View example CSV for {selectedQuestionType} Type
-              </a>
-            )}
-          </p>
+          <p className="relative z-20 font-sans font-normal text-neutral-400 dark:text-neutral-400 text-base mt-2 z-[1000] hover:scale-125 transition duration-200 ease-out">
+      {1 && (
+        <span
+          className="text-sky-500 mt-2 mb-3 cursor-pointer"
+          onClick={handleCSVExample}
+        >
+          View example CSV for {selectedQuestionType} Type
+        </span>
+      )}
+    </p>
           <div className="relative w-full mt-10 max-w-xl mx-auto">
             {files.length > 0 &&
               files.map((file, idx) => (
@@ -135,13 +146,8 @@ export const FileUpload = ({
                       {file.type}
                     </motion.p>
 
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      layout
-                    >
-                      modified{" "}
-                      {new Date(file.lastModified).toLocaleDateString()}
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} layout>
+                      modified {new Date(file.lastModified).toLocaleDateString()}
                     </motion.p>
                   </div>
                 </motion.div>

@@ -28,6 +28,7 @@ import { address, data, filter, map } from "framer-motion/client";
 import { title } from "process";
 import { description } from "./taskExtracted";
 import { log } from "console";
+import { useRouter } from "next/navigation";
 
 const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const client = new AptosClient(NODE_URL);
@@ -79,6 +80,7 @@ const Dashboard = () => {
   // }, [jobs, account?.address]);
   const handleOpen = () => setOpen(true);
   // console.log(creatorData);
+  const router = useRouter();
 
   const currentJobIndexRef = useRef(0);
   const currentTaskIndexRef = useRef(0);
@@ -286,6 +288,18 @@ const Dashboard = () => {
     if (jobs.length === 0) getJobs("next");
   }, [account, open]);
 
+  useEffect(() => {
+   if(creatorData?.role==="1"){
+    router.push("/creators/tasks")
+   }
+
+
+  },[creatorData])
+
+
+    
+  
+
   const tabs = [
     {
       title: "Completed Tasks",
@@ -352,11 +366,7 @@ const Dashboard = () => {
 
   if (creatorData?.role === "1") {
     return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <h1 className="text-3xl font-semibold text-center">
-          You are a Creator. Please switch to Worker to proceed
-        </h1>
-      </div>
+      null
     );
   }
   console.log(prevState)

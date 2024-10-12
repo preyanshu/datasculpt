@@ -11,7 +11,11 @@ import {
 } from "@aptos-labs/wallet-adapter-react";
 import Register from "./Register";
 import { Button } from "./ui/button";
+
+
+
 import { data, address, pre, div, p, ul, view, button } from "framer-motion/client";
+
 
 const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const client = new AptosClient(NODE_URL);
@@ -54,6 +58,7 @@ const Dashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
   const handleOpen = () => setOpen(true);
+
   const pendingJobIdxRef = useRef(0);
   const completeJobIdxRef = useRef(0);
   const currentTaskIndexRef = useRef(0);
@@ -276,6 +281,7 @@ const getCompleteJobs = async (direction: "next" | "previous") => {
   }
 };
 
+
   const getJobs = async () => {
     if (!account) return [];
     setLoading(true);
@@ -395,6 +401,10 @@ const getCompleteJobs = async (direction: "next" | "previous") => {
 
   useEffect(() => {
     // Convert jobs to the new structure
+
+    if(creatorData?.role === "2"){
+      router.push("/worker/tasks")
+    }
     const newJobs = convertToNewStructure(jobs || []);
     
     // Calculate total jobs created, pending, and completed
@@ -448,6 +458,7 @@ const getCompleteJobs = async (direction: "next" | "previous") => {
     );
   }
 
+
   if(creatorData?.role === "2"){
     return (
       <div className="flex flex-col items-center justify-center h-full">
@@ -459,6 +470,7 @@ const getCompleteJobs = async (direction: "next" | "previous") => {
   }
   
   console.log(prevPending, prevPending.length, pendingIdxRef.current, pendingJobs1, "prevPending");
+
   return (
     <div className="flex flex-col items-center w-full h-full p-4 md:p-10">
       {/* Creator Details */}

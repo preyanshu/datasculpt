@@ -43,11 +43,13 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
+import { useCreatorData } from "@/context/creatorContext";
 
 export function WalletSelector(walletSortingOptions: WalletSortingOptions) {
   const { account, connected, disconnect, wallet } = useWallet();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { creatorData ,setCreatorData} = useCreatorData();
 
   const closeDialog = useCallback(() => setIsDialogOpen(false), []);
 
@@ -91,7 +93,10 @@ export function WalletSelector(walletSortingOptions: WalletSortingOptions) {
             </a>
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem onSelect={disconnect} className="gap-2">
+        <DropdownMenuItem onSelect={()=>{
+          disconnect();
+          setCreatorData(null);
+        }} className="gap-2">
           <LogOut className="h-4 w-4" /> Disconnect
         </DropdownMenuItem>
       </DropdownMenuContent>
