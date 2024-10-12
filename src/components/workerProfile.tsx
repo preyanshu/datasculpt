@@ -29,6 +29,7 @@ import { title } from "process";
 import { description } from "./taskExtracted";
 import { log } from "console";
 import { useRouter } from "next/navigation";
+import ReactLoading from "react-loading";
 
 const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const client = new AptosClient(NODE_URL);
@@ -290,7 +291,7 @@ const Dashboard = () => {
 
   useEffect(() => {
    if(creatorData?.role==="1"){
-    router.push("/creators/tasks")
+    // router.push("/creators/tasks")
    }
 
 
@@ -337,7 +338,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <img src="/assets/loading.gif" alt="" className="h-[80px]" />
+         <ReactLoading  type={"spin"} height={67} width={67} />
       </div>
     );
   }
@@ -369,6 +370,19 @@ const Dashboard = () => {
       null
     );
   }
+
+  const getAvatar = () => {
+
+    if (creatorData?.name) {
+      // Generate placeholder avatar using the first letter of the name
+      const firstLetter = creatorData.name.charAt(0).toUpperCase();
+      return `https://ui-avatars.com/api/?name=${firstLetter}&background=random&color=fff&size=128`;
+    }
+  
+    // Fallback URL for an anonymous user (if name is missing)
+    return "https://ui-avatars.com/api/?name=.&background=fef&color=fff&size=128";
+  };
+
   console.log(prevState)
   return (
     <div className="flex flex-col items-center w-full h-full p-4 md:p-10">
@@ -377,11 +391,11 @@ const Dashboard = () => {
         <div className="flex items-center">
           {/* Profile Picture */}
           <Image
-            src={workerProfile.profilePic}
+            src={getAvatar()}
             alt="Profile Picture"
             width={100}
             height={100}
-            className="rounded-full border-4 border-blue-500"
+            className="rounded-full "
           />
           {/* Profile Info */}
           <div className="ml-6">
@@ -446,15 +460,44 @@ const Dashboard = () => {
       </div>
 
       {/* Tabs */}
-      {!loadingJob ? (
+     
+
+
+     
         <div className="w-full max-w-4xl">
-          <Tabs tabs={tabs} />
+        <div className="flex space-x-4 mb-4  mt-4">
+        <div  className={`rounded-lg flex justify-center items-center px-4 py-2 cursor-pointer bg-[#27272A] text-white transition duration-200`} style={{borderRadius:"30px"} }>
+          Pending Jobs
         </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center h-full">
-          <img src="/assets/loading.gif" alt="" className="h-[80px]" />
+       
+      </div>
+          {/* <Tabs tabs={tabs} /> */}
+          <div className="w-full overflow-hidden relative h-[460px] rounded-2xl p-10 text-white bg-neutral-800">
+          <div>
+  {loadingJob ? (
+    <div className="flex justify-center items-center h-[380px] ">
+      <ReactLoading type={"spin"} height={67} width={67} />
+    </div>
+  ) : completedTasks?.length > 0 ? (
+    <ul className="space-y-4">
+      <ExpandableCard completedTasks={completedTasks} />
+    </ul>
+  ) : (
+    <p className="text-neutral-600 dark:text-neutral-300">
+      No pending jobs found.
+    </p>
+  )}
+</div>
+
+
         </div>
-      )}
+        <div className="w-full flex my-10">
+            <button className="ml-auto px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg shadow-md hover:from-blue-500 hover:to-blue-700 transition-all" disabled={currIdxRef.current === 0} onClick={() => getJobs('previous')}>previous</button>
+            <button className="ml-auto px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg shadow-md hover:from-blue-500 hover:to-blue-700 transition-all" disabled={currentJobIndexRef.current == Number(maxJobsRef.current)} onClick={() => getJobs('next')}>next</button>
+          </div>
+        </div>
+     
+
     </div>
   );
 };

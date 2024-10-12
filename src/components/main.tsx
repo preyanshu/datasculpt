@@ -13,6 +13,7 @@ import Register from "./Register";
 import { AptosClient } from "aptos";
 import { Button } from "./ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import ReactLoading from "react-loading";
 
 const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const client = new AptosClient(NODE_URL);
@@ -215,7 +216,8 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <img src="/assets/loading.gif" alt="" className="h-[80px]" />
+        {/* <img src="/assets/loading.gif" alt="" className="h-[80px]" /> */}
+        <ReactLoading type="spin" color="#fff" height={67} width={67} />
       </div>
     );
   }
@@ -240,7 +242,7 @@ const Dashboard = () => {
 
   // Redirect worker users to /worker/tasks
   if (creatorData?.role === "2") {
-    router.push("/worker/tasks");
+    // router.push("/worker/tasks");
     return null; // Prevent rendering anything else after redirection
   }
 

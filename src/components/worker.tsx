@@ -17,16 +17,13 @@ import {
 } from "@aptos-labs/wallet-adapter-react";
 import Register from "./Register";
 import { useToast } from "./ui/use-toast";
-import AOS from "aos";
-import { data, filter, h1, map, span } from "framer-motion/client";
-import { count, log } from "console";
-import { parse, stringify } from "querystring";
-import { on } from "events";
-import { type } from "os";
 import { useRouter } from "next/navigation";
 
 const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const client = new AptosClient(NODE_URL);
+import ReactLoading from 'react-loading';
+import { color } from "framer-motion";
+import { type } from "os";
 
 const moduleAddress =
   "0x57bbd67464830f3ea4464b4e2e20de137a42e0eb5c44f12e602261e6ec1a6c0f";
@@ -304,9 +301,9 @@ const Dashboard = () => {
   }, [account, open, connected]);
 
   useEffect(() => {
-    if(creatorData?.role=="1"){
-      router.push("/creators/tasks")
-    }
+    // if(creatorData?.role=="1"){
+    //   router.push("/creators/tasks")
+    // }
   }, [creatorData]);
 
   // const questions = convertStructure(jobs);
@@ -422,7 +419,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <img src="/assets/loading.gif" alt="" className="h-[80px]" />
+         <ReactLoading  type={"spin"} height={67} width={67} />
       </div>
     );
   }
@@ -478,7 +475,8 @@ const Dashboard = () => {
               //  onSlideChange={handleSlideChange}
               setApi={setApi}
             >
-              {loading1 &&  <div className="absolute top-0 left-0 h-full w-full bg-blue-500" style={{zIndex:100}}>
+              {loading1 &&  <div className="absolute top-0 left-0 h-full w-full border-neutral-700 bg-neutral-800 rounded-2xl flex items-center justify-center" style={{zIndex:100}}>
+                <ReactLoading  type={"spin"} height={67} width={67} />
 
 
 
@@ -664,11 +662,7 @@ const Dashboard = () => {
                           </div>
                         ) : (
                           <div className="flex flex-col items-center justify-center h-full">
-                            <img
-                              src="/assets/loading.gif"
-                              alt=""
-                              className="h-[80px]"
-                            />
+                             <ReactLoading  type={"spin"} height={67} width={67} />
                           </div>
                         )}
                       </CardContent>

@@ -11,6 +11,7 @@ import {
 } from "@aptos-labs/wallet-adapter-react";
 import Register from "./Register";
 import { Button } from "./ui/button";
+import ReactLoading from "react-loading";
 
 
 
@@ -52,7 +53,7 @@ const Dashboard = () => {
     totalJobsCompleted: 0,
   });
 
-  const [view, setView] = useState("completed");
+  const [view, setView] = useState("pending");
 
   const [open, setOpen] = useState(false);
   const [jobs, setJobs] = useState([]);
@@ -402,9 +403,6 @@ const getCompleteJobs = async (direction: "next" | "previous") => {
   useEffect(() => {
     // Convert jobs to the new structure
 
-    if(creatorData?.role === "2"){
-      router.push("/worker/tasks")
-    }
     const newJobs = convertToNewStructure(jobs || []);
     
     // Calculate total jobs created, pending, and completed
@@ -432,7 +430,7 @@ const getCompleteJobs = async (direction: "next" | "previous") => {
   if(loading){
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <img src="/assets/loading.gif" alt="" className="h-[80px]" />
+            <ReactLoading type="spin" color="#fff" height={67} width={67} />
       </div>
     );
   }
@@ -471,13 +469,27 @@ const getCompleteJobs = async (direction: "next" | "previous") => {
   
   console.log(prevPending, prevPending.length, pendingIdxRef.current, pendingJobs1, "prevPending");
 
+
+  
+  const getAvatar = () => {
+
+    if (creatorData?.name) {
+      // Generate placeholder avatar using the first letter of the name
+      const firstLetter = creatorData.name.charAt(0).toUpperCase();
+      return `https://ui-avatars.com/api/?name=${firstLetter}&background=random&color=fff&size=128`;
+    }
+  
+    // Fallback URL for an anonymous user (if name is missing)
+    return "https://ui-avatars.com/api/?name=.&background=fef&color=fff&size=128";
+  };
+
   return (
     <div className="flex flex-col items-center w-full h-full p-4 md:p-10">
       {/* Creator Details */}
       <div className="w-full max-w-4xl bg-gray-100 dark:bg-neutral-800 p-6 rounded-lg shadow-md mb-6 mt-20">
         <div className="flex items-center space-x-4">
           <Image
-            src={creator?.profilePic ? creator.profilePic : "https://assets.aceternity.com/manu.png"}
+            src={getAvatar()}
             alt="Profile Picture"
             width={80}
             height={80}
@@ -534,8 +546,9 @@ const getCompleteJobs = async (direction: "next" | "previous") => {
         <div className="w-full overflow-hidden relative h-[600px] rounded-2xl p-10 text-white bg-neutral-800">
           <div>
   {loadingJob ? (
-    <div className="flex justify-center items-center h-32">
-      <p className="text-neutral-600 dark:text-neutral-300">Loading...</p>
+    <div className="flex justify-center items-center h-[515px]">
+      {/* <p className="text-neutral-600 dark:text-neutral-300">Loading...</p> */}
+      <ReactLoading type="spin" color="#fff" height={67} width={67} />
     </div>
   ) : pendingJobs1?.length > 0 ? (
     <ul className="space-y-4">
@@ -551,8 +564,9 @@ const getCompleteJobs = async (direction: "next" | "previous") => {
       ) : (
         <div className="w-full overflow-hidden relative h-[600px] rounded-2xl p-10 text-white bg-neutral-800">
            {loadingCompleteJob ? (
-    <div className="flex justify-center items-center h-32">
-      <p className="text-neutral-600 dark:text-neutral-300">Loading...</p>
+   <div className="flex justify-center items-center h-[515px]">
+   {/* <p className="text-neutral-600 dark:text-neutral-300">Loading...</p> */}
+   <ReactLoading type="spin" color="#fff" height={67} width={67} />
     </div>
   ) : completeJobs1?.length > 0 ? (
     <ul className="space-y-4">
