@@ -113,7 +113,7 @@ export default function RootLayout({
                 <SidebarLink
                   link={{
                     label:  " " + (creatorData?.name || "--"), //get this label for creatorprovider from creator data
-                    href: "/",
+                    href: "#",
                     icon: (
                       <Image
                         src={getAvatar()}

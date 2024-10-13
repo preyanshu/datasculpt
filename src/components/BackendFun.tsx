@@ -3,10 +3,12 @@
 
 import { AptosClient } from "aptos";
 import { useWallet, InputTransactionData } from "@aptos-labs/wallet-adapter-react";
+import config from "@/context/config"
 
-const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
+const NODE_URL = config.NODE_URL;
 const client = new AptosClient(NODE_URL);
-const moduleAddress = "0x3345aa79df67a6e958da1693380a2bbef9882fc309da10564bcbe6dcdcf0d801"
+
+const moduleAddress = config.MODULE_ADDRESS;
 
 const { account, signAndSubmitTransaction } = useWallet();
 

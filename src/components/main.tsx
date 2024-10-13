@@ -18,12 +18,13 @@ import { error } from "console";
 import { data, map, filter, header } from "framer-motion/client";
 import { url } from "inspector";
 import { parse } from "path";
+import RoleSwitcher from "./RoleSwitcher";
+import config from "@/context/config"
 
-const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
+const NODE_URL = config.NODE_URL;
 const client = new AptosClient(NODE_URL);
 
-const moduleAddress =
-  "0x57bbd67464830f3ea4464b4e2e20de137a42e0eb5c44f12e602261e6ec1a6c0f";
+const moduleAddress = config.MODULE_ADDRESS;
 
 interface QuestionSet {
   question: { question: string; url?: string };
@@ -116,8 +117,9 @@ const Dashboard = () => {
   };
 
   const calculatePrice = () => {
-    const basePrice = 0.025 * numberOfTasks * peoplePerTask;
-    const fee = basePrice * 0.2;
+    const basePrice = 0.05 * numberOfTasks * peoplePerTask;
+    const fee = basePrice * 0.02;
+    console.log(basePrice, fee,"calculated price");
     return basePrice + fee;
   };
 
@@ -167,7 +169,7 @@ const parseCSVToQuestions = (file: File): Promise<QuestionSet[]> => {
         <div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
             <div className="bg-neutral-800 p-4 rounded-lg">
-              <TaskExtracted taskExtracted={numberOfTasks} failed={0} title={"Total Data (Extracted and Failed)"} />
+              <TaskExtracted taskExtracted={numberOfTasks} failed={0} title={"Total Data"} />
             </div>
             <div className="bg-neutral-800 p-4 rounded-lg">
               <div className="my-4">
@@ -182,7 +184,7 @@ const parseCSVToQuestions = (file: File): Promise<QuestionSet[]> => {
                 />
                 <div className="flex justify-between text-sm mt-2 text-gray-400">
                   <span>1</span>
-                  <span>{peoplePerTask}</span>
+                  <span className="text-blue-500 " style={{fontWeight:"bold"}}>{peoplePerTask}</span>
                   <span>10</span>
                 </div>
                 <p className="my-5 bg-gray-800 text-orange-400 border text-sm border-gray-700 rounded-lg p-3">
@@ -248,8 +250,9 @@ const parseCSVToQuestions = (file: File): Promise<QuestionSet[]> => {
 
   // Redirect worker users to /worker/tasks
   if (creatorData?.role === "2") {
-    // router.push("/worker/tasks");
-    return null; // Prevent rendering anything else after redirection
+    return (
+        <RoleSwitcher role="worker" />
+    )
   }
 
   return (
@@ -261,6 +264,13 @@ const parseCSVToQuestions = (file: File): Promise<QuestionSet[]> => {
           <div className="h-full w-3/4 rounded-lg bg-gray-100 dark:bg-neutral-800 p-4">
             <div className="text-center text-3xl font-semibold mt-5 text-white">
               Step {step} of 3: {step === 2 ? "Analytics Overview" : step === 1 ? "Upload CSV File" : "Verify Questions"}
+              {step === 3 && (
+                <div className="mt-8 border-2 border-gray-700 p-2 rounded-lg bg-slate-900">
+                  <p className="text-sm text-orange-400 font-light font-mono">
+                   <span className="text-yellow-500 font-semibold">(Optional)</span> Please provide some answers to your questions. This will help us verify workers answer
+                  </p>
+                </div>
+              )}
 
               
             </div>

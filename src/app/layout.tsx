@@ -9,6 +9,7 @@ import router, { usePathname } from 'next/navigation';
 import style from "styled-jsx/style";
 import { CreatorProvider } from "@/context/creatorContext";
 import NextNProgress from 'nextjs-progressbar';
+import { link } from "fs";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",

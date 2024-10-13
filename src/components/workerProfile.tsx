@@ -30,18 +30,21 @@ import { description } from "./taskExtracted";
 import { log } from "console";
 import { useRouter } from "next/navigation";
 import ReactLoading from "react-loading";
+import RoleSwitcher from "./RoleSwitcher";
+import config from "@/context/config";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
-const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
+const NODE_URL = config.NODE_URL;
 const client = new AptosClient(NODE_URL);
 
-const moduleAddress =
-  "0x57bbd67464830f3ea4464b4e2e20de137a42e0eb5c44f12e602261e6ec1a6c0f";
+const moduleAddress = config.MODULE_ADDRESS;
 
 function convertTaskData(inputArray, currentAddress) {
   console.log(inputArray, "inp");
   return inputArray.flatMap((item) =>
     item.tasks
-      // .filter((task) => task.picked_by.includes(currentAddress)) 
+      .filter((task) => task.picked_by.includes(currentAddress))
       .map((task) => ({
         id: parseInt(item.jobId), // Convert jobId to number for id
         title: `Job ${item.jobId} Task ${task.task_id}`, // Use task_id for title
@@ -92,17 +95,21 @@ const Dashboard = () => {
     if (!account) return [];
     setLoadingJob(true);
 
-    console.log(currentJobIndexRef.current, Number(maxJobsRef.current), "Number equal")
-    
+    console.log(
+      currentJobIndexRef.current,
+      Number(maxJobsRef.current),
+      "Number equal"
+    );
+
     try {
       const jobResource = await client.getAccountResource(
         "0x1dc03758f2c3a17cec451cfef4b7f50fd530c10400731aa2c22abcde7b678bd6",
         `${moduleAddress}::job_management::JobManagement`
       );
-  
+
       const jobHandle = (jobResource as any).data.jobs.handle;
       const jobCounter = (jobResource as any).data.job_counter;
-  
+
       if (jobCounter === 0) {
         setJobs([]);
         return;
@@ -111,34 +118,40 @@ const Dashboard = () => {
       let totalFetchedTasks = 0;
       let allJobs = [];
       maxJobsRef.current = jobCounter;
-  
+
       let jobIndex = currentJobIndexRef.current; // Get current job index from ref
       let taskIndex = currentTaskIndexRef.current; // Get current task index from ref
-  
+
       if (direction === "next") {
-        console.log(Number(maxJobsRef.current) === currentJobIndexRef.current, "maxJobs");
+        console.log(
+          Number(maxJobsRef.current) === currentJobIndexRef.current,
+          "maxJobs"
+        );
         // Check if there is already cached data in prevState
-        if (prevState.length > currIdxRef.current+1) {
-            setCompletedTasks(prevState[currIdxRef.current+1]);
-            currIdxRef.current++;
-            console.log(currIdxRef.current, "next")
-            setLoadingJob(false); // Set loading false because we already have the data
-            return;
+        if (prevState.length > currIdxRef.current + 1) {
+          setCompletedTasks(prevState[currIdxRef.current + 1]);
+          currIdxRef.current++;
+          console.log(currIdxRef.current, "next");
+          setLoadingJob(false); // Set loading false because we already have the data
+          return;
         }
         // Otherwise, fetch new data
         jobIndex = currentJobIndexRef.current;
         taskIndex = currentTaskIndexRef.current;
-    
-    } else if (direction === "previous") {        
+      } else if (direction === "previous") {
         // Ensure we don't go below the first index
         const newIdx = currIdxRef.current > 0 ? currIdxRef.current - 1 : 0;
         setCompletedTasks(prevState[newIdx]); // Fetch the previous state
         currIdxRef.current = newIdx; // Update the current index
         setLoadingJob(false);
-        console.log("previous", currIdxRef.current, prevState[currIdxRef.current]);
+        console.log(
+          "previous",
+          currIdxRef.current,
+          prevState[currIdxRef.current]
+        );
         return;
-    }
-  
+      }
+
       let ans = [];
       // Continue fetching tasks until we meet the batch size and filter tasks
       while (jobIndex < jobCounter && ans.length < 4) {
@@ -148,17 +161,17 @@ const Dashboard = () => {
           key: `${jobIndex + 1}`,
         };
         const job = await client.getTableItem(jobHandle, tableItem);
-  
+
         const taskHandle = job.tasks.handle;
         const taskCounter = job.task_counter;
-  
+
         // Calculate the number of tasks to fetch from this job
         const remainingTasksInJob = taskCounter - taskIndex;
         const tasksNeeded = 4 - ans.length;
 
         // Fetch tasks starting from the last fetched task index, but not more than needed
         const tasksToFetch = Math.min(remainingTasksInJob, tasksNeeded);
-        
+
         // Fetch tasks starting from the last fetched task index
         const taskFetchPromises = Array.from(
           { length: tasksToFetch },
@@ -171,10 +184,10 @@ const Dashboard = () => {
             return client.getTableItem(taskHandle, taskItem);
           }
         );
-  
+
         const tasks = await Promise.all(taskFetchPromises);
         totalFetchedTasks += tasks.length;
-  
+
         // Push job data with tasks into allJobs array
         allJobs.push({
           creator: job.creator,
@@ -183,33 +196,33 @@ const Dashboard = () => {
           tasks: tasks,
           amount: job.amount,
         });
-  
+
         // Filter tasks based on the condition
         ans = convertTaskData(allJobs, account?.address);
-  
+
         // If no valid tasks found, fetch from the next job
         taskIndex += tasksToFetch;
         if (taskIndex >= taskCounter) {
           jobIndex++; // Move to the next job
           taskIndex = 0; // Reset task index for the new job
         }
-  
+
         // Handle out-of-bounds taskIndex if previous was requested
         if (taskIndex < 0) taskIndex = 0;
-  
+
         currentJobIndexRef.current = jobIndex; // Update the current job index in the ref
         currentTaskIndexRef.current = taskIndex; // Update the current task index in the ref
       }
-  
+
       // If there are filtered tasks, append the fetched jobs
       if (ans.length >= 0) {
-        setCompletedTasks(ans);        
+        setCompletedTasks(ans);
         // Use function form of setState to ensure latest prevState is used
         setPrevState((prev) => [...prevState, ans]);
         currIdxRef.current = prevState.length;
         console.log("next", currIdxRef.current);
       }
-  
+
       console.log(ans, "ans");
       setJobs((prev) => [...prev, allJobs]);
       console.log("Fetched jobs and tasks:", allJobs);
@@ -221,7 +234,6 @@ const Dashboard = () => {
       setLoadingJob(false);
     }
   };
-  
 
   const withdraw = async () => {
     if (!account) {
@@ -232,7 +244,7 @@ const Dashboard = () => {
     const transaction: InputTransactionData = {
       data: {
         function: `${moduleAddress}::user_registry::withdraw_balance`,
-        functionArguments: [withdrawAmount],
+        functionArguments: [withdrawAmount * 1e8],
       },
     };
     try {
@@ -240,12 +252,14 @@ const Dashboard = () => {
       console.log("Withdraw.", response);
       await client.waitForTransaction(response.hash);
       // setLoading(false);
+      setWithdrawAmount(0);
       await getUserProfile(account?.address).then((res) => {
         console.log(res);
         setCreatorData(res ? res[0] : null);
       });
       toast({ title: "Success", description: "Withdrawal Successful" });
     } catch (error) {
+      setWithdrawAmount(0);
       console.log(error);
       // setLoading(false);
       toast({
@@ -290,16 +304,10 @@ const Dashboard = () => {
   }, [account, open]);
 
   useEffect(() => {
-   if(creatorData?.role==="1"){
-    // router.push("/creators/tasks")
-   }
-
-
-  },[creatorData])
-
-
-    
-  
+    if (creatorData?.role === "1") {
+      // router.push("/creators/tasks")
+    }
+  }, [creatorData]);
 
   const tabs = [
     {
@@ -325,9 +333,23 @@ const Dashboard = () => {
               </p>
             )}
           </div>
-          <div className="w-full flex">
-            <button className="ml-auto px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg shadow-md hover:from-blue-500 hover:to-blue-700 transition-all" disabled={currIdxRef.current === 0} onClick={() => getJobs('previous')}>previous</button>
-            <button className="ml-auto px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg shadow-md hover:from-blue-500 hover:to-blue-700 transition-all" disabled={currentJobIndexRef.current == Number(maxJobsRef.current)} onClick={() => getJobs('next')}>next</button>
+          <div className="w-full flex my-5 gap-10 justify-around items-center">
+            <button
+              className="p-3 w-[50px] h-[50px] transition duration-900 bg-gradient-to-r from-gray-900 to-gray-600 text-white rounded-full shadow-md hover:from-blue-500 hover:to-blue-700 transition-all"
+              disabled={currIdxRef.current === 0}
+              onClick={() => getJobs("previous")}
+            >
+              previous
+            </button>
+            <button
+              className="p-3 w-[50px] h-[50px] transition duration-900 bg-gradient-to-r from-gray-900 to-gray-600 text-white rounded-full shadow-md hover:from-blue-500 hover:to-blue-700 transition-all"
+              disabled={
+                currentJobIndexRef.current == Number(maxJobsRef.current)
+              }
+              onClick={() => getJobs("next")}
+            >
+              next
+            </button>
           </div>
           <div className="h-[40px]"></div>
         </>
@@ -338,7 +360,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
-         <ReactLoading  type={"spin"} height={67} width={67} />
+        <ReactLoading type={"spin"} height={67} width={67} />
       </div>
     );
   }
@@ -366,24 +388,21 @@ const Dashboard = () => {
   }
 
   if (creatorData?.role === "1") {
-    return (
-      null
-    );
+    return <RoleSwitcher role="creator" />;
   }
 
   const getAvatar = () => {
-
     if (creatorData?.name) {
       // Generate placeholder avatar using the first letter of the name
       const firstLetter = creatorData.name.charAt(0).toUpperCase();
       return `https://ui-avatars.com/api/?name=${firstLetter}&background=random&color=fff&size=128`;
     }
-  
+
     // Fallback URL for an anonymous user (if name is missing)
     return "https://ui-avatars.com/api/?name=.&background=fef&color=fff&size=128";
   };
 
-  console.log(prevState)
+  console.log(prevState);
   return (
     <div className="flex flex-col items-center w-full h-full p-4 md:p-10">
       {/* Worker Profile Section */}
@@ -426,7 +445,7 @@ const Dashboard = () => {
                   Total Tasks Completed:
                 </span>{" "}
                 <span className="text-green-400">
-                  {workerProfile.totalTasksCompleted}
+                  {creatorData?.worker_completed_jobs}
                 </span>
               </div>
               {/* Account Balance */}
@@ -460,44 +479,52 @@ const Dashboard = () => {
       </div>
 
       {/* Tabs */}
-     
 
-
-     
-        <div className="w-full max-w-4xl">
+      <div className="w-full max-w-4xl">
         <div className="flex space-x-4 mb-4  mt-4">
-        <div  className={`rounded-lg flex justify-center items-center px-4 py-2 cursor-pointer bg-[#27272A] text-white transition duration-200`} style={{borderRadius:"30px"} }>
-          Pending Jobs
-        </div>
-       
-      </div>
-          {/* <Tabs tabs={tabs} /> */}
-          <div className="w-full overflow-hidden relative h-[460px] rounded-2xl p-10 text-white bg-neutral-800">
-          <div>
-  {loadingJob ? (
-    <div className="flex justify-center items-center h-[380px] ">
-      <ReactLoading type={"spin"} height={67} width={67} />
-    </div>
-  ) : completedTasks?.length > 0 ? (
-    <ul className="space-y-4">
-      <ExpandableCard completedTasks={completedTasks} />
-    </ul>
-  ) : (
-    <p className="text-neutral-600 dark:text-neutral-300">
-      No pending jobs found.
-    </p>
-  )}
-</div>
-
-
-        </div>
-        <div className="w-full flex my-10">
-            <button className="ml-auto px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg shadow-md hover:from-blue-500 hover:to-blue-700 transition-all" disabled={currIdxRef.current === 0} onClick={() => getJobs('previous')}>previous</button>
-            <button className="ml-auto px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg shadow-md hover:from-blue-500 hover:to-blue-700 transition-all" disabled={currentJobIndexRef.current == Number(maxJobsRef.current)} onClick={() => getJobs('next')}>next</button>
+          <div
+            className={`rounded-lg flex justify-center items-center px-4 py-2 cursor-pointer bg-[#27272A] text-white transition duration-200`}
+            style={{ borderRadius: "30px" }}
+          >
+            Pending Jobs
           </div>
         </div>
-     
-
+        {/* <Tabs tabs={tabs} /> */}
+        <div className="w-full overflow-hidden relative h-[460px] rounded-2xl p-10 text-white bg-neutral-800">
+          <div>
+            {loadingJob ? (
+              <div className="flex justify-center items-center h-[380px] ">
+                <ReactLoading type={"spin"} height={67} width={67} />
+              </div>
+            ) : completedTasks?.length > 0 ? (
+              <ul className="space-y-4">
+                <ExpandableCard completedTasks={completedTasks} />
+              </ul>
+            ) : (
+              <p className="text-neutral-600 dark:text-neutral-300">
+                No pending jobs found.
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="w-full flex my-5 gap-10 justify-around items-center">
+          <button
+            className="p-3 w-[50px] h-[50px] transition duration-900 bg-gradient-to-r from-gray-900 to-gray-600 text-white rounded-full shadow-md hover:from-blue-500 hover:to-blue-700 transition-all"
+            disabled={currIdxRef.current === 0}
+            onClick={() => getJobs("previous")}
+          >
+            <FontAwesomeIcon icon={faArrowLeft} /> 
+          </button>
+          <strong>Page: {currIdxRef.current > 0 ? currIdxRef.current : 0}</strong>
+          <button
+            className="p-3 w-[50px] h-[50px] transition duration-900 bg-gradient-to-r from-gray-900 to-gray-600 text-white rounded-full shadow-md hover:from-blue-500 hover:to-blue-700 transition-all"
+            disabled={currentJobIndexRef.current == Number(maxJobsRef.current)}
+            onClick={() => getJobs("next")}
+          >
+            <FontAwesomeIcon icon={faArrowRight} /> 
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

@@ -55,6 +55,9 @@ export default function ExpandableCard({ jobs , getAns , loadingAns }: Expandabl
         const maxWorkers = Number(active.maxworkers);
         const pickedWorkers = Number(workersPicked);
         const completionPercentage = (pickedWorkers / maxWorkers) * 100;
+        console.log("Workers Picked",workersPicked);
+        console.log("Max Workers",maxWorkers);
+        console.log("Completion Percentage",completionPercentage);
         let range: string;
         if (completionPercentage < 30) range = "0-30%";
         else if (completionPercentage < 50) range = "30-50%";
@@ -123,7 +126,7 @@ export default function ExpandableCard({ jobs , getAns , loadingAns }: Expandabl
                 </div>
                 <div className="flex justify-between">
                   <strong>Payment:</strong>
-                  <span className="text-orange-500">${Number(active.amount) / 1e6}</span>
+                  <span className="text-orange-500">{Number(active.amount) / 1e8 + " "}APT</span>
                 </div>
                 <div className="flex justify-between">
                   <strong>Total Tasks:</strong>
@@ -234,7 +237,7 @@ export default function ExpandableCard({ jobs , getAns , loadingAns }: Expandabl
                   Status: <span className={job.isCompleted ? "text-green-500" : "text-yellow-500"}>{job.isCompleted ? "Completed" : "In Progress"}</span>
                 </p>
                 <p className={`text-neutral-600 dark:text-neutral-400 text-center md:text-left`}>
-                  Payment: <span className="text-orange-500">{Number(job.amount) / 1e9 + "  "}</span>APT
+                  Payment: <span className="text-orange-500">{Number(job.amount) / 1e8 + "  "}</span>APT
                 </p>
               </div>
             </div>

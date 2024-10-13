@@ -18,18 +18,16 @@ import {
 import Register from "./Register";
 import { useToast } from "./ui/use-toast";
 import { useRouter } from "next/navigation";
-
-const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
-const client = new AptosClient(NODE_URL);
 import ReactLoading from 'react-loading';
 import { color } from "framer-motion";
 import { type } from "os";
+import RoleSwitcher from "./RoleSwitcher";
+import config from "@/context/config"
 
-const moduleAddress =
-  "0x57bbd67464830f3ea4464b4e2e20de137a42e0eb5c44f12e602261e6ec1a6c0f";
+const NODE_URL = config.NODE_URL;
+const client = new AptosClient(NODE_URL);
 
-const currentAddress =
-  "0xa0480d4fab208ce268cac8a154f997b6aaf2036a0d9426384072b6b90659341a";
+const moduleAddress = config.MODULE_ADDRESS;
 
 const convertStructure = (oldData, account) => {
   console.log("Old Data:", oldData); // Log the old data for debugging
@@ -449,9 +447,12 @@ const Dashboard = () => {
         <Register open={open} setOpen={setOpen} user={"worker"} />
       </div>
     </div>
-  ) : creatorData?.role === "1" ? (
-    null
-  ) : (
+  ) : 
+  creatorData?.role === "1" ? 
+     (
+        <RoleSwitcher role="creator" />
+    )
+   : (
     <div className="flex flex-col items-center w-full h-full">
       <div className="absolute top-5 right-[250px] flex justify-end w-[60%] items-center">
         <h1 className=" text-xl flex items-center font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-blue-500 shadow-md mr-[30px]">

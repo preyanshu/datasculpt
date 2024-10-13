@@ -10,12 +10,12 @@ import { Input } from "@/components/ui/input"; // Adjust for your Input componen
 import { Label } from "@/components/ui/label"; // Adjust for your Label component
 import { Button } from "@/components/ui/button"; // Adjust for your Button component
 import { useToast } from "./ui/use-toast";
+import config from "@/context/config"
 
-const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
+const NODE_URL = config.NODE_URL;
 const client = new AptosClient(NODE_URL);
 
-const moduleAddress =
-  "0x57bbd67464830f3ea4464b4e2e20de137a42e0eb5c44f12e602261e6ec1a6c0f";
+const moduleAddress = config.MODULE_ADDRESS;
 
 interface RegisterWorkerProps {
   open: boolean;

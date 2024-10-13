@@ -164,9 +164,11 @@ export const ModalContent = ({
 export const ModalFooter = ({
   children,
   className,
+  name
 }: {
   children: ReactNode;
   className?: string;
+  name?: string;
 }) => {
   const { setOpen } = useModal();
   return (
@@ -175,7 +177,16 @@ export const ModalFooter = ({
         "flex justify-end p-4 bg-gray-100 dark:bg-neutral-900",
         className
       )}
-      onClick={() => setOpen(false)}
+      onClick={() => {
+
+        if(!name || name === ""){
+          return ;
+        }
+        
+        setOpen(false)
+
+
+      }}
     >
       {children}
     </div>

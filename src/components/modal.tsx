@@ -17,12 +17,12 @@ import { useToast } from "./ui/use-toast";
 import { useModal } from "@/components/ui/animated-modal";
 import { map } from "framer-motion/client";
 import { url } from "inspector";
+import config from "@/context/config"
 
-const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
+const NODE_URL = config.NODE_URL;
 const client = new AptosClient(NODE_URL);
 
-const moduleAddress =
-  "0x57bbd67464830f3ea4464b4e2e20de137a42e0eb5c44f12e602261e6ec1a6c0f";
+const moduleAddress = config.MODULE_ADDRESS;
 
 interface AnimatedModalDemoProps {
   totalTasks: number;
@@ -47,9 +47,9 @@ export const AnimatedModalDemo: React.FC<AnimatedModalDemoProps> = ({
   console.log("predefined",predefinedQuestions);
 
 
-  const pricePerPerson = totalPrice / (totalTasks * peoplePerTask);
-  const platformFee = totalPrice * 0.0025; 
-  const totalWithFee = totalPrice + platformFee; 
+  const pricePerPerson = 0.05;
+  const platformFee = totalPrice * 0.02; 
+  const totalWithFee = totalPrice ; 
   console.log(totalWithFee * 1e8);
 
 
@@ -127,7 +127,7 @@ const preanswers = predefinedQuestions.map((question) => {
             Review Details
           </span>
           <div className="-translate-x-40 group-hover/modal-btn:translate-x-0 flex items-center justify-center absolute inset-0 transition duration-500 text-white z-20">
-            ✈️
+          📝
           </div>
         </ModalTrigger>
         <ModalBody>
@@ -170,25 +170,35 @@ const preanswers = predefinedQuestions.map((question) => {
               </div>
               <div className="flex justify-between">
                 <span>Price per Person:</span>
-                <span>{pricePerPerson.toFixed(2)} SOL</span>
+                <span>{pricePerPerson.toFixed(2)} APT</span>
               </div>
               <div className="flex justify-between">
                 <span>Platform Fee (2%):</span>
-                <span>{platformFee.toFixed(2)} SOL</span>
+                <span>{platformFee.toFixed(2)} APT</span>
               </div>
               <div className="border-t border-neutral-300 dark:border-neutral-700 my-4"></div>
               <div className="flex justify-between font-bold text-lg">
                 <span>Total Amount:</span>
-                <span>{totalWithFee.toFixed(2)} SOL</span>
+                <span>{totalWithFee.toFixed(2)} APT</span>
               </div>
             </div>
           </ModalContent>
 
           {/* Footer with actions */}
-          <ModalFooter className="gap-4">
+          <ModalFooter className="gap-4" name={name}>
             <button
               className="bg-green-500 text-white dark:bg-green-700 dark:text-white text-sm px-4 py-2 rounded-md border border-black w-36"
-              onClick={createJob}
+              onClick={()=>{
+                if(!name || name===""){
+                  toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Please enter a name.",
+                  });
+                  return;
+                }
+                createJob();
+              }}
             >
               Confirm and Pay
             </button>

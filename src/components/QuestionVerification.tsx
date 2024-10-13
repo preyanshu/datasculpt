@@ -72,7 +72,7 @@ const QuestionVerification = ({ questions, onProceed, questionType,userAnswers,s
             {questionObj.options.map((option, optionIndex) => (
               <div
                 key={optionIndex}
-                className={`border-2 rounded-lg flex items-center justify-between p-4 cursor-pointer ${
+                className={`border-2 rounded-lg flex items-center justify-between p-4 cursor-pointer overflow-x-auto ${
                   userAnswers[questionIndex]?.answers?.includes(option)
                     ? "border-green-500 bg-green-600"
                     : "border-gray-600 bg-neutral-900"
@@ -88,7 +88,7 @@ const QuestionVerification = ({ questions, onProceed, questionType,userAnswers,s
                   />
                   {/* Render image for image options or text based on type */}
                   {questionType === "image-text" || questionType === "text-text" ? (
-                    <span className="overflow-hidden whitespace-nowrap text-ellipsis">{option}</span>
+                    <span className="">{option}</span>
                   ) : (
                     <img src={option} alt={`Option ${optionIndex + 1}`} className="w-[auto] h-[250px] object-cover" />
                   )}
