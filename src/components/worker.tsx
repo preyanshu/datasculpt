@@ -432,9 +432,9 @@ const Dashboard = () => {
       {/* <Button color="primary" className="hover:pointer" onClick={handleOpen}>
         Register
     </Button> */}
-      <div className="w-[100px] h-[100px] bg-blue-600" data-aos="zoom-in"></div>
+      {/* <div className="w-[100px] h-[100px] " data-aos="zoom-in"></div> */}
 
-      <div data-aos="zoom-down" className="bg-blue-800 w-full">
+      <div data-aos="zoom-down" className=" w-full">
         <Register open={open} setOpen={setOpen} user={"worker"} />
       </div>
     </div>
