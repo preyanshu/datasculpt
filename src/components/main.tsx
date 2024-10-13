@@ -14,6 +14,10 @@ import { AptosClient } from "aptos";
 import { Button } from "./ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import ReactLoading from "react-loading";
+import { error } from "console";
+import { data, map, filter, header } from "framer-motion/client";
+import { url } from "inspector";
+import { parse } from "path";
 
 const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const client = new AptosClient(NODE_URL);
@@ -122,38 +126,40 @@ const Dashboard = () => {
     setSelectedQuestionType(type);
   };
 
-  const parseCSVToQuestions = (file: File): Promise<QuestionSet[]> => {
-    return new Promise((resolve, reject) => {
-      Papa.parse(file, {
-        complete: (results: any) => {
-          const questions: QuestionSet[] = results.data.map((row: any) => {
-            const [question, ...options] = row as string[];
+const parseCSVToQuestions = (file: File): Promise<QuestionSet[]> => {
+  return new Promise((resolve, reject) => {
+    Papa.parse(file, {
+      complete: (results: any) => {
+        // Skip the first row and map the remaining rows
+        const questions: QuestionSet[] = results.data.slice(1).map((row: any) => {
+          const [question, ...options] = row as string[];
 
-            if (selectedQuestionType === "image-text" || selectedQuestionType === "image-image") {
-              const imageUrl = options.shift(); 
-              return {
-                question: { question, url: imageUrl || "" },
-                options: options,
-              };
-            }
-
+          if (selectedQuestionType === "image-text" || selectedQuestionType === "image-image") {
+            const imageUrl = options.shift(); 
             return {
-              question: { question },
+              question: { question, url: imageUrl || "" },
               options: options,
             };
-          });
+          }
 
-          const filteredQuestions = questions.filter((q) => q.question.question);
-          resolve(filteredQuestions);
-        },
-        header: false,
-        skipEmptyLines: true,
-        error: (error: any) => {
-          reject(error);
-        },
-      });
+          return {
+            question: { question },
+            options: options,
+          };
+        });
+
+        const filteredQuestions = questions.filter((q) => q.question.question);
+        resolve(filteredQuestions);
+      },
+      header: false,
+      skipEmptyLines: true,
+      error: (error: any) => {
+        reject(error);
+      },
     });
-  };
+  });
+};
+
 
   const renderFileUploadContent = () => {
     if (step === 2) {
@@ -255,6 +261,8 @@ const Dashboard = () => {
           <div className="h-full w-3/4 rounded-lg bg-gray-100 dark:bg-neutral-800 p-4">
             <div className="text-center text-3xl font-semibold mt-5 text-white">
               Step {step} of 3: {step === 2 ? "Analytics Overview" : step === 1 ? "Upload CSV File" : "Verify Questions"}
+
+              
             </div>
 
             {renderFileUploadContent()}

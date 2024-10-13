@@ -356,6 +356,10 @@ const Dashboard = () => {
       console.log("connect your wallet");
       return [];
     }
+    // if(options?.length === 0){
+    //   alert("Please select an answer to proceed");
+    //   return [];
+    // }
 
     const transaction: InputTransactionData = {
       data: {
@@ -398,9 +402,16 @@ const Dashboard = () => {
     // Log the selected answers for the current question
     const selectedOptions = selectedAnswers[questionIndex];
     console.log(selectedOptions, "selectedOptions", jobId, taskId);
+    if(selectedOptions?.length === 0 || !selectedOptions ){
+      // alert("Please select an answer to proceed");
+      toast({ variant: "destructive",title: "Error", description: "Please select an answer to proceed" });
+      return;}
+   
+      const res = pickJob(selectedOptions, jobId, taskId, questionIndex);
+      console.log("picked job response", res);
+    
 
-    const res = pickJob(selectedOptions, jobId, taskId, questionIndex);
-    console.log("picked job response", res);
+  
     //todo confirm the trancsaction executed
   };
 

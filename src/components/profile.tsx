@@ -551,7 +551,7 @@ const getCompleteJobs = async (direction: "next" | "previous") => {
       getPendingJobs("next");
       getCompleteJobs("next");
     }
-  }, [account]);
+  }, [account,connected]);
 
   useEffect(() => {
     // Convert jobs to the new structure

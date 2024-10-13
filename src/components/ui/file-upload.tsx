@@ -71,10 +71,29 @@ export const FileUpload = ({
   const handleCSVExample = (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
-
-    // Navigate programmatically using router.push
-    window.open("/path-to-csv-example", "_blank"); // Replace with the correct path
+  
+    let exampleUrl = "";
+  
+    switch (selectedQuestionType) {
+      case "text-text":
+        exampleUrl = "https://docs.google.com/spreadsheets/d/1yLmXifz1LhnaAyoao1iwm8gbSi--bMn1TlQL2bMgDDI/edit?usp=sharing"; // Replace with your actual path
+        break;
+      case "text-image":
+        exampleUrl = "https://docs.google.com/spreadsheets/d/1DFB9JlvFyb4a1zSPIV-IWmCjR32PYonpo4GV1hY_0KU/edit?usp=sharing"; // Replace with your actual path
+        break;
+      case "image-text":
+        exampleUrl = "https://docs.google.com/spreadsheets/d/1WQL1rwG6kME4rXKunc4RecOzt6ERMiF5Sbswf3PChS4/edit?usp=sharing"; // Replace with your actual path
+        break;
+      case "image-image":
+        exampleUrl = "https://docs.google.com/spreadsheets/d/1pl06NZxWzskHa8Mg8vNPft4Hl2HPsKEwGUAtBFEADoo/edit?usp=sharing"; // Replace with your actual path
+        break;
+      default:
+        exampleUrl = "https://docs.google.com/spreadsheets/d/1yLmXifz1LhnaAyoao1iwm8gbSi--bMn1TlQL2bMgDDI/edit?usp=sharing"; // Fallback or default case
+    }
+  
+    window.open(exampleUrl, "_blank");
   };
+  
 
   return (
     <div key={selectedQuestionType} className="w-full" {...getRootProps()}>
