@@ -1,7 +1,11 @@
 import React, { useEffect, useId, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, color, motion } from "framer-motion";
 import Chart from "react-apexcharts";
 import { useOutsideClick } from "@/hooks/use-outside-click";
+import { button } from "framer-motion/client";
+import { type } from "os";
+import ReactLoading from "react-loading";
+import { FaDownload } from 'react-icons/fa'
 
 interface Job {
   creator: string;
@@ -16,9 +20,11 @@ interface Job {
 
 interface ExpandableCardProps {
   jobs: Job[];
+  getAns : any;
+  loadingAns : boolean;
 }
 
-export default function ExpandableCard({ jobs }: ExpandableCardProps) {
+export default function ExpandableCard({ jobs , getAns , loadingAns }: ExpandableCardProps) {
   const [active, setActive] = useState<Job | null>(null);
   const [localJobs, setLocalJobs] = useState<Job[]>(jobs); // New state for local jobs
   const ref = useRef<HTMLDivElement>(null);
@@ -112,8 +118,8 @@ export default function ExpandableCard({ jobs }: ExpandableCardProps) {
             
               <div className="p-4">
                 <div className="flex justify-between">
-                  <strong>Creator:</strong>
-                  <span className="text-purple-500">{active.creator}</span>
+                  <strong>Name:</strong>
+                  <span className="text-purple-500">{active.name}</span>
                 </div>
                 <div className="flex justify-between">
                   <strong>Payment:</strong>
@@ -126,7 +132,29 @@ export default function ExpandableCard({ jobs }: ExpandableCardProps) {
               </div>
               <div className="px-4 py-2">
               <hr />
-                <h4 className="font-semibold text-neutral-700 dark:text-neutral-200 mt-5">Task Completion Distribution:</h4>
+              <div className="w-full flex justify-between  items-center mt-5"> <h4 className="font-semibold text-neutral-700 dark:text-neutral-200 ">Task Completion Distribution:</h4>
+
+                 <button
+      className="btn flex items-center justify-center bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
+      onClick={() => getAns(Number(active.jobId))}
+      disabled={loadingAns}
+    >
+      {loadingAns ? (
+        <ReactLoading
+          type="spin"
+          color="#ffffff"
+          height={24}
+          width={24}
+          className="mr-2"
+        />
+      ) : (
+        <FaDownload className="mr-2" />
+      )}
+      {loadingAns ? 'Downloading...' : 'Sculpted Data'}
+    </button>
+              
+              </div>
+               
                 <Chart
                   options={{
                     chart: {

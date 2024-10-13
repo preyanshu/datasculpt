@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, createElement } from "react";
 import Image from "next/image";
 import { Tabs } from "@/components/ui/tabs";
 import ExpandableCard from "./blocks/expandable-card-demo-standard";
@@ -15,7 +15,10 @@ import ReactLoading from "react-loading";
 
 
 
-import { data, address, pre, div, p, ul, view, button } from "framer-motion/client";
+import { data, address, pre, div, p, ul, view, button, body, map, style } from "framer-motion/client";
+import { get } from "http";
+import { type } from "os";
+import { join } from "path";
 
 
 const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
@@ -71,6 +74,156 @@ const Dashboard = () => {
   const [completeJobs1, setCompleteJobs1] = useState<Array<any>>([]);
   let pendingIdxRef = useRef(-1);
   let completeIdxRef = useRef(-1);
+
+  const [loadingAns, setLoadingAns] = useState(false);
+  // const [questions, setQuestions] = useState([]);
+
+
+  const getAnswers = async (jobId : number) => {
+    if (!account || !jobId) return [];
+    setLoadingAns(true);
+  
+    try {
+      const jobResource = await client.getAccountResource(
+        "0x1dc03758f2c3a17cec451cfef4b7f50fd530c10400731aa2c22abcde7b678bd6",
+        `${moduleAddress}::job_management::JobManagement`
+      );
+  
+      const jobHandle = (jobResource as any).data.jobs.handle;
+      const jobCounter = (jobResource as any).data.job_counter;
+  
+      if (jobCounter === 0 || jobId > jobCounter) {
+        setJobs([]);
+        setLoadingAns(false);
+        return;
+      }
+  
+      // Fetch job using the provided jobId
+      const tableItem = {
+        key_type: "u64",
+        value_type: `${moduleAddress}::job_management::Job`,
+        key: `${jobId}`,
+      };
+      const job = await client.getTableItem(jobHandle, tableItem);
+  
+      const taskHandle = job.tasks.handle;
+      const taskCounter = job.task_counter;
+  
+      if (taskCounter === 0) {
+        // setQuestions([]);
+        // setJobs([]);
+        setLoadingAns(false);
+        return;
+      }
+  
+      let allTasks = [];
+  
+      // Fetch all tasks for this job
+      const taskFetchPromises = Array.from({ length: taskCounter }, (_, index) => {
+        const taskItem = {
+          key_type: "u64",
+          value_type: `${moduleAddress}::job_management::Task`,
+          key: `${index + 1}`,
+        };
+        return client.getTableItem(taskHandle, taskItem);
+      });
+  
+      const tasks = await Promise.all(taskFetchPromises);
+  
+      allTasks.push(...tasks);
+      console.log(allTasks, "allTasks");
+
+      downloadTasksAsCSV(allTasks);
+  
+      // Filter tasks based on the condition
+  
+    
+  
+     setLoadingAns(false);
+    } catch (error) {
+      console.error(error);
+      setLoadingAns(false);
+    }
+  };
+
+  const downloadTasksAsCSV = (tasks: any) => {
+    // Find the maximum number of options across all tasks
+    const maxOptions = tasks.reduce((max, task) => Math.max(max, task.options.length), 0);
+  
+    // Generate CSV Header
+    const headers = ['task_id', 'question'];
+    for (let i = 1; i <= maxOptions; i++) {
+      headers.push(`option ${i}`);
+    }
+    headers.push('answer');
+  
+    // Function to find the most frequent answer in the task_answers array
+    const getMostFrequentAnswer = (task_answers) => {
+      if (task_answers.length === 0) {
+        return 'no answers';
+      }
+      const answerCount = {};
+      task_answers.forEach((answer) => {
+        answerCount[answer] = (answerCount[answer] || 0) + 1;
+      });
+      const mostFrequentAnswer = Object.keys(answerCount).reduce((a, b) =>
+        answerCount[a] > answerCount[b] ? a : b
+      );
+      return mostFrequentAnswer;
+    };
+  
+    // Build CSV rows
+    const rows = tasks.map((task) => {
+      const mostFrequentAnswer = getMostFrequentAnswer(task.task_answers);
+  
+      // Create a row starting with task_id and question (wrapped in quotes)
+      const row = [
+        task.task_id,
+        `"${task.question.replace(/"/g, '""')}"`, // Handle double quotes inside question
+      ];
+  
+      // Add options dynamically (wrap each option in quotes, fill in blank if fewer than maxOptions)
+      task.options.forEach(option => row.push(`"${option.replace(/"/g, '""')}"`));
+      while (row.length < 2 + maxOptions) {
+        row.push(''); // Fill empty columns for missing options
+      }
+  
+      // Add the most frequent answer (wrapped in quotes)
+      row.push(`"${mostFrequentAnswer.replace(/"/g, '""')}"`);
+  
+      return row;
+    });
+  
+    // Combine headers and rows into a CSV string
+    const csvContent = [
+      headers.join(','), // Join headers with commas
+      ...rows.map((row) => row.join(',')) // Join each row array with commas
+    ].join('\n');
+  
+    // Create a Blob from the CSV content
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  
+    // Create a download link for the Blob
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'tasks.csv');
+    link.style.visibility = 'hidden';
+    
+    // Append the link to the document, click it, and remove it
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
+
+
+  useEffect(()=>{
+    // getAnswers(5);
+    
+
+  },[])
+  
 
   const getPendingJobs = async (direction: "next" | "previous") => {
   if (!account) return [];
@@ -552,7 +705,7 @@ const getCompleteJobs = async (direction: "next" | "previous") => {
     </div>
   ) : pendingJobs1?.length > 0 ? (
     <ul className="space-y-4">
-      <ExpandableCard jobs={pendingJobs1} />
+      <ExpandableCard jobs={pendingJobs1} getAns={getAnswers} loadingAns={loadingAns}/>
     </ul>
   ) : (
     <p className="text-neutral-600 dark:text-neutral-300">
@@ -570,7 +723,7 @@ const getCompleteJobs = async (direction: "next" | "previous") => {
     </div>
   ) : completeJobs1?.length > 0 ? (
     <ul className="space-y-4">
-      <ExpandableCard jobs={ completeJobs1} />
+      <ExpandableCard jobs={ completeJobs1} getAns={getAnswers} loadingAns={loadingAns}/>
     </ul>
   ) : (
     <p className="text-neutral-600 dark:text-neutral-300">
