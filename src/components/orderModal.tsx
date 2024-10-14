@@ -110,7 +110,7 @@ const preanswers = predefinedQuestions.map((question) => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to create job.",
+        description: error ? "" + error :  "There may be some issues with wallet connection, please reload/reconnect your wallet properly the page and try again",
       });
       setOpen(false);
     }

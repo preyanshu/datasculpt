@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Tabs } from "@/components/ui/tabs";
 import ExpandableCard from "../blocks/expandable-card-creator";
 import { useCreatorData } from "@/context/context";
-import { AptosClient } from "aptos";
+import { AptosClient, HexString } from "aptos";
 import {
   useWallet,
   InputTransactionData,
@@ -300,9 +300,9 @@ const Dashboard = () => {
 
         // Filter jobs based on creator's address and completion status
 
-        console.log(account?.address, job.creator, job.is_completed, "job");
+        console.log(HexString.ensure(account?.address).toShortString(), job.creator, job.is_completed, "job");
 
-        if (job.creator === account?.address && job.is_completed === false) {
+        if (job.creator === HexString.ensure(account?.address).toShortString() && job.is_completed === false) {
           console.log(job, "job");
           filteredJobs.push({
             creator: job.creator,
@@ -409,7 +409,7 @@ const Dashboard = () => {
         const job = await client.getTableItem(jobHandle, tableItem);
 
         // Filter jobs based on creator's address and completion status
-        if (job.creator === account?.address && job.is_completed === true) {
+        if (job.creator === HexString.ensure(account?.address).toShortString() && job.is_completed === true) {
           filteredJobs.push({
             creator: job.creator,
             jobId: job.job_id,
