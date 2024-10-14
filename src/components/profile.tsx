@@ -16,25 +16,10 @@ import ReactLoading from "react-loading";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
-import {
-  data,
-  address,
-  pre,
-  div,
-  p,
-  ul,
-  view,
-  button,
-  body,
-  map,
-  style,
-  h1,
-} from "framer-motion/client";
-import { get } from "http";
-import { type } from "os";
-import { join } from "path";
 import RoleSwitcher from "./RoleSwitcher";
 import config from "@/context/config"
+import { log } from "console";
+import { address } from "framer-motion/client";
 
 const NODE_URL = config.NODE_URL;
 const client = new AptosClient(NODE_URL);
@@ -236,9 +221,6 @@ const Dashboard = () => {
     document.body.removeChild(link);
   };
 
-  useEffect(() => {
-    // getAnswers(5);
-  }, []);
 
   const getPendingJobs = async (direction: "next" | "previous") => {
     if (!account) return [];
@@ -254,13 +236,16 @@ const Dashboard = () => {
       const jobHandle = (jobResource as any).data.jobs.handle;
       const jobCounter = (jobResource as any).data.job_counter;
 
+      console.log(prevPending, "prevPending");
+
       // If there are no jobs, reset the jobs state and stop loading
+      console.log("a");
       if (jobCounter === 0) {
         setJobs([]);
         setLoadingJob(false);
         return;
       }
-
+    console.log("b")
       let jobIndex = pendingJobIdxRef.current; // Get current job index from ref
       const BATCH_SIZE = 4; // Set the batch size to 4 jobs per fetch
 
@@ -273,6 +258,7 @@ const Dashboard = () => {
         // Handle the "next" direction with cached data
         if (prevPending.length > pendingIdxRef.current + 1) {
           // Use cached data if available
+          console.log(prevPending[pendingIdxRef.current + 1],"lol");
           setPendingJobs1(prevPending[pendingIdxRef.current + 1]);
           pendingIdxRef.current++;
           setLoadingJob(false);
@@ -313,6 +299,9 @@ const Dashboard = () => {
         const job = await client.getTableItem(jobHandle, tableItem);
 
         // Filter jobs based on creator's address and completion status
+
+        console.log(account?.address, job.creator, job.is_completed, "job");
+
         if (job.creator === account?.address && job.is_completed === false) {
           console.log(job, "job");
           filteredJobs.push({
@@ -352,9 +341,7 @@ const Dashboard = () => {
       setLoadingJob(false); // Stop loading in case of an error
     }
   };
-  const handleTabClick = (newView: string) => {
-    setView(newView);
-  };
+
   const getCompleteJobs = async (direction: "next" | "previous") => {
     if (!account) return [];
     setLoadingCompleteJob(true);
@@ -459,84 +446,84 @@ const Dashboard = () => {
     }
   };
 
-  const getJobs = async () => {
-    if (!account) return [];
-    setLoading(true);
-    try {
-      // Fetch the JobManagement resource for the given account
-      const jobResource = await client.getAccountResource(
-        "0x1dc03758f2c3a17cec451cfef4b7f50fd530c10400731aa2c22abcde7b678bd6",
-        `${moduleAddress}::job_management::JobManagement`
-      );
 
-      const jobHandle = (jobResource as any).data.jobs.handle;
-      const jobCounter = (jobResource as any).data.job_counter;
+  //   if (!account) return [];
+  //   setLoading(true);
+  //   try {
+  //     // Fetch the JobManagement resource for the given account
+  //     const jobResource = await client.getAccountResource(
+  //       "0x1dc03758f2c3a17cec451cfef4b7f50fd530c10400731aa2c22abcde7b678bd6",
+  //       `${moduleAddress}::job_management::JobManagement`
+  //     );
 
-      if (jobCounter === 0) {
-        setJobs([]); // No jobs, so early return
-        return;
-      }
+  //     const jobHandle = (jobResource as any).data.jobs.handle;
+  //     const jobCounter = (jobResource as any).data.job_counter;
 
-      // Create an array of job fetch promises
-      const jobFetchPromises = Array.from(
-        { length: jobCounter },
-        (_, index) => {
-          const tableItem = {
-            key_type: "u64",
-            value_type: `${moduleAddress}::job_management::Job`,
-            key: `${index + 1}`,
-          };
-          return client.getTableItem(jobHandle, tableItem);
-        }
-      );
+  //     if (jobCounter === 0) {
+  //       setJobs([]); // No jobs, so early return
+  //       return;
+  //     }
 
-      // Fetch all jobs concurrently
-      const jobs = await Promise.all(jobFetchPromises);
-      console.log(jobs);
-      // Fetch tasks for each job concurrently
-      const jobTaskFetchPromises = jobs.map(async (job) => {
-        const taskHandle = job.tasks.handle;
-        const taskCounter = job.task_counter;
+  //     // Create an array of job fetch promises
+  //     const jobFetchPromises = Array.from(
+  //       { length: jobCounter },
+  //       (_, index) => {
+  //         const tableItem = {
+  //           key_type: "u64",
+  //           value_type: `${moduleAddress}::job_management::Job`,
+  //           key: `${index + 1}`,
+  //         };
+  //         return client.getTableItem(jobHandle, tableItem);
+  //       }
+  //     );
 
-        // Create an array of task fetch promises for each job
-        const taskFetchPromises = Array.from(
-          { length: taskCounter },
-          (_, index) => {
-            const tableItem = {
-              key_type: "u64",
-              value_type: `${moduleAddress}::job_management::Task`,
-              key: `${index + 1}`,
-            };
-            return client.getTableItem(taskHandle, tableItem);
-          }
-        );
+  //     // Fetch all jobs concurrently
+  //     const jobs = await Promise.all(jobFetchPromises);
+  //     console.log(jobs);
+  //     // Fetch tasks for each job concurrently
+  //     const jobTaskFetchPromises = jobs.map(async (job) => {
+  //       const taskHandle = job.tasks.handle;
+  //       const taskCounter = job.task_counter;
 
-        // Fetch all tasks for the job concurrently
-        const tasks = await Promise.all(taskFetchPromises);
+  //       // Create an array of task fetch promises for each job
+  //       const taskFetchPromises = Array.from(
+  //         { length: taskCounter },
+  //         (_, index) => {
+  //           const tableItem = {
+  //             key_type: "u64",
+  //             value_type: `${moduleAddress}::job_management::Task`,
+  //             key: `${index + 1}`,
+  //           };
+  //           return client.getTableItem(taskHandle, tableItem);
+  //         }
+  //       );
 
-        // Return a new job with tasks
-        return {
-          creator: job.creator,
-          jobId: job.job_id,
-          taskCounter: job.task_counter,
-          tasks: tasks,
-          amount: job.amount,
-          isCompleted: job.is_completed,
-          tasksPicked: job.task_pick_count,
-        };
-      });
+  //       // Fetch all tasks for the job concurrently
+  //       const tasks = await Promise.all(taskFetchPromises);
 
-      // Resolve all job and task fetch promises
-      const newJobs = await Promise.all(jobTaskFetchPromises);
-      console.log(newJobs);
-      setLoading(false);
-      // Set the jobs in state
-      setJobs(newJobs);
-    } catch (error) {
-      console.error(error);
-      setLoading(false);
-    }
-  };
+  //       // Return a new job with tasks
+  //       return {
+  //         creator: job.creator,
+  //         jobId: job.job_id,
+  //         taskCounter: job.task_counter,
+  //         tasks: tasks,
+  //         amount: job.amount,
+  //         isCompleted: job.is_completed,
+  //         tasksPicked: job.task_pick_count,
+  //       };
+  //     });
+
+  //     // Resolve all job and task fetch promises
+  //     const newJobs = await Promise.all(jobTaskFetchPromises);
+  //     console.log(newJobs);
+  //     setLoading(false);
+  //     // Set the jobs in state
+  //     setJobs(newJobs);
+  //   } catch (error) {
+  //     console.error(error);
+  //     setLoading(false);
+  //   }
+  // };
 
   const getUserProfile = async (address: string | undefined) => {
     if (!address) {
@@ -557,6 +544,8 @@ const Dashboard = () => {
       return null;
     }
   };
+
+  const [dataLoaded, setDataLoaded] = useState(false);
   useEffect(() => {
     if (connected) {
       getUserProfile(account?.address).then((res) => {
@@ -565,15 +554,43 @@ const Dashboard = () => {
         if (res === null) handleOpen();
       });
     }
+  
+    console.log("fetching new ");
+    pendingIdxRef.current = -1;
+    completeIdxRef.current = -1;
+    pendingJobIdxRef.current = 0;
+    completeJobIdxRef.current = 0;
+  
+    // Reset arrays to empty and set dataLoaded to false
+    setCompleteJobs1([]);
+    setPendingJobs1([]);
+    setPrevPending([]);
+    setPrevComplete([]);
+    setDataLoaded(false);  // Reset dataLoaded flag after resetting
+  
   }, [account, connected]);
-
+  
+  // Effect to load data only once after reset
   useEffect(() => {
-    if (jobs.length === 0 && account) {
-      getJobs();
-      getPendingJobs("next");
+    if (
+      !dataLoaded && // Only proceed if data has not been loaded yet
+      completeJobs1.length === 0 &&
+      pendingJobs1.length === 0 &&
+      prevPending.length === 0 &&
+      prevComplete.length === 0
+    ) {
+      console.log("All arrays are empty, proceeding with API calls...");
+      
+      // Fetch pending and complete jobs
       getCompleteJobs("next");
+      getPendingJobs("next");
+  
+      // Set dataLoaded to true to avoid further API calls
+      setDataLoaded(true);
     }
-  }, [account, connected]);
+  }, [completeJobs1, pendingJobs1, prevPending, prevComplete, dataLoaded]);
+
+
 
   useEffect(() => {
     // Convert jobs to the new structure
@@ -791,7 +808,7 @@ const Dashboard = () => {
           <div className="w-full flex my-5 gap-10 justify-around items-center">
             <button
               className="p-3 w-[50px] h-[50px] transition duration-900 bg-gradient-to-r from-gray-900 to-gray-600 text-white rounded-full shadow-md hover:from-blue-500 hover:to-blue-700 transition-all"
-              disabled={pendingIdxRef.current === 0}
+              disabled={loadingJob || pendingIdxRef.current <= 0}
               onClick={() => getPendingJobs("previous")}
             >
               <FontAwesomeIcon icon={faArrowLeft} /> {/* Previous Icon */}
@@ -800,6 +817,7 @@ const Dashboard = () => {
             <button
               className="p-3 w-[50px] h-[50px]  bg-gradient-to-r from-gray-900 to-gray-600 text-white rounded-full shadow-md hover:from-blue-500 hover:to-blue-700 transition-all" 
               onClick={() => getPendingJobs("next")}
+              disabled={loadingJob || pendingJobs1.length === 0}
             >
               <FontAwesomeIcon icon={faArrowRight} /> {/* Next Icon */}
             </button>
@@ -810,7 +828,7 @@ const Dashboard = () => {
           <div className="w-full flex my-5 gap-10 justify-around items-center">
             <button
               className="p-3 w-[50px] h-[50px] bg-gradient-to-r from-gray-900 to-gray-600 text-white rounded-full shadow-md hover:from-blue-500 hover:to-blue-700 transition-all"
-              disabled={pendingIdxRef.current === 0}
+              disabled={loadingCompleteJob || completeIdxRef.current <= 0}
               onClick={() => getCompleteJobs("previous")}
             >
               <FontAwesomeIcon icon={faArrowLeft} /> {/* Previous Icon */}
@@ -819,6 +837,7 @@ const Dashboard = () => {
             <button
               className="p-3 w-[50px] h-[50px]  bg-gradient-to-r from-gray-900 to-gray-600 text-white rounded-full shadow-md hover:from-blue-500 hover:to-blue-700 transition-all"
               onClick={() => getCompleteJobs("next")}
+              disabled={loadingCompleteJob || completeJobs1.length === 0}
             >
               <FontAwesomeIcon icon={faArrowRight} /> {/* Next Icon */}
             </button>
