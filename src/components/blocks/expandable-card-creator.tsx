@@ -16,6 +16,7 @@ interface Job {
   tasksPicked: string[];
   maxworkers: string;
   name: string;
+  type : string;
 }
 
 interface ExpandableCardProps {
@@ -139,7 +140,7 @@ export default function ExpandableCard({ jobs , getAns , loadingAns }: Expandabl
 
                  <button
       className="btn flex items-center justify-center bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
-      onClick={() => getAns(Number(active.jobId))}
+      onClick={() => getAns(Number(active.jobId),active.type)}
       disabled={loadingAns}
     >
       {loadingAns ? (

@@ -135,7 +135,7 @@ const Dashboard = () => {
       allTasks.push(...tasks);
       console.log(allTasks, "allTasks");
 
-      downloadTasksAsCSV(allTasks);
+      downloadTasksAsCSV(allTasks,type);
 
       // Filter tasks based on the condition
 
@@ -323,6 +323,9 @@ const Dashboard = () => {
             tasksPicked: job.task_pick_count,
             maxworkers: job.max_workers,
             name: job.job_name || "-",
+            type : job?.job_type || "text-text"
+
+
           });
           fetchedCount++; // Increment the fetched jobs count
         }
@@ -427,6 +430,10 @@ const Dashboard = () => {
             amount: job.amount,
             isCompleted: job.is_completed,
             tasksPicked: job.task_pick_count,
+            maxworkers: job.max_workers,
+            name: job.job_name || "-",
+            type : job?.job_type || "text-text"
+
           });
           fetchedCount++; // Increment the fetched jobs count
         }
