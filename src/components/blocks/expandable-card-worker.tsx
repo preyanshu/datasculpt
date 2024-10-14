@@ -186,7 +186,7 @@ export default function ExpandableCard({ completedTasks }: ExpandableCardProps) 
               </div>
 
               <p className={`text-neutral-600 dark:text-neutral-400 text-center md:text-left mt-3`}>
-                  <span className="text-green-500 ">+0.0025 APT</span>
+                  <span className="text-green-500 ">+0.05 APT</span>
                 </p>
 
             </div>

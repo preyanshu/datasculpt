@@ -200,9 +200,9 @@ export const ProductCard = ({
       >
         <Image
           src={product.thumbnail}
-          height="600"
+          height="300"
           width="600"
-          className="object-cover object-left-top absolute h-full w-full inset-0"
+          className="absolute h-[300px] border-2 border-gray-600 rounded-lg w-full inset-0"
           alt={product.title}
         />
       </Link>

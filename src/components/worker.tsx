@@ -36,25 +36,25 @@ const convertStructure = (oldData, account) => {
     job.tasks
       .filter((task) => !task?.picked_by?.includes(account?.address) && !task.completed)
       .map((task) => {
-      const { question, options, task_id, url, picked_by } = task;
-      const isImageType =
-        job.job_type === "image-text" || job.job_type === "image-image";
-      const firstOption = options[0];
-      const remainingOptions = options.slice(1);
+        const { question, options, task_id, url, picked_by } = task;
+        const isImageType =
+          job.job_type === "image-text" || job.job_type === "image-image";
+        const firstOption = options[0];
+        const remainingOptions = options.slice(1);
 
-      return {
-        jobid: parseInt(job.jobId, 10),
-        taskid: parseInt(task_id, 10),
-        question: {
-          question: isImageType ? question : question, // Redundant condition, but keeping it for clarity
-          ...(isImageType && { url: url || firstOption }), // Add URL only for image-type jobs
-        },
-        options: isImageType ? remainingOptions : options, // For image jobs, exclude the first option
-        type: job.job_type,
-        isCompleted: task.completed,
-        pickedBy: picked_by, // Include picked_by array in the result
-      };
-    })
+        return {
+          jobid: parseInt(job.jobId, 10),
+          taskid: parseInt(task_id, 10),
+          question: {
+            question: isImageType ? question : question, // Redundant condition, but keeping it for clarity
+            ...(isImageType && { url: url || firstOption }), // Add URL only for image-type jobs
+          },
+          options: isImageType ? remainingOptions : options, // For image jobs, exclude the first option
+          type: job.job_type,
+          isCompleted: task.completed,
+          pickedBy: picked_by, // Include picked_by array in the result
+        };
+      })
   );
 
   console.log("New Data:", newData); // Log the new converted data for debugging
@@ -173,7 +173,7 @@ const Dashboard = () => {
         const taskHandle = job.tasks.handle;
         const taskCounter = job.task_counter;
 
-        console.log("JOb",job);
+        console.log("JOb", job);
 
         // Calculate the number of tasks to fetch from this job
         const remainingTasksInJob = taskCounter - taskIndex;
@@ -184,7 +184,7 @@ const Dashboard = () => {
 
         // Fetch tasks starting from the last fetched task index
 
-        console.log("fetch", jobIndex," ",taskIndex)
+        console.log("fetch", jobIndex, " ", taskIndex)
         const taskFetchPromises = Array.from(
           { length: tasksToFetch },
           (_, index) => {
@@ -235,10 +235,10 @@ const Dashboard = () => {
       }
 
       if (ans.length > 0) {
-        setQuestions((prev) => [...ans]);        
+        setQuestions((prev) => [...ans]);
         setJobs((prevJobs: Array<any>) => allJobs);
       }
-      else{
+      else {
         setQuestions([]);
       }
       console.log(ans, allBatchesEmpty, "ans");
@@ -400,16 +400,17 @@ const Dashboard = () => {
     // Log the selected answers for the current question
     const selectedOptions = selectedAnswers[questionIndex];
     console.log(selectedOptions, "selectedOptions", jobId, taskId);
-    if(selectedOptions?.length === 0 || !selectedOptions ){
+    if (selectedOptions?.length === 0 || !selectedOptions) {
       // alert("Please select an answer to proceed");
-      toast({ variant: "destructive",title: "Error", description: "Please select an answer to proceed" });
-      return;}
-   
-      const res = pickJob(selectedOptions, jobId, taskId, questionIndex);
-      console.log("picked job response", res);
-    
+      toast({ variant: "destructive", title: "Error", description: "Please select an answer to proceed" });
+      return;
+    }
 
-  
+    const res = pickJob(selectedOptions, jobId, taskId, questionIndex);
+    console.log("picked job response", res);
+
+
+
     //todo confirm the trancsaction executed
   };
 
@@ -430,7 +431,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
-         <ReactLoading  type={"spin"} height={67} width={67} />
+        <ReactLoading type={"spin"} height={67} width={67} />
       </div>
     );
   }
@@ -447,255 +448,252 @@ const Dashboard = () => {
         <Register open={open} setOpen={setOpen} user={"worker"} />
       </div>
     </div>
-  ) : 
-  creatorData?.role === "1" ? 
-     (
+  ) :
+    creatorData?.role === "1" ?
+      (
         <RoleSwitcher role="creator" />
-    )
-   : (
-    <div className="flex flex-col items-center w-full h-full">
-      <div className="absolute top-5 right-[250px] flex justify-end w-[60%] items-center">
-        <h1 className=" text-xl flex items-center font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-blue-500 shadow-md mr-[30px]">
-          <span className="text-white">Reputation: </span>
+      )
+      : (
+        <div className="flex flex-col items-center w-full h-full">
+          <div className="absolute top-5 right-[250px] flex justify-end w-[60%] items-center">
+            <h1 className=" text-xl flex items-center font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-blue-500 shadow-md mr-[30px]">
+              <span className="text-white">Reputation: </span>
 
-          <span className="ml-2 text-2xl">
-            {
-              creatorData.reputation_points > 0 ? (
-                "⭐".repeat(creatorData.reputation_points) // Render stars based on reputation score
-              ) : (
-                <span className="text-red-500 text-xl ">User Banned</span>
-              ) // Show 'User Banned' if score is 0
-            }
-          </span>
-        </h1>
+              <span className="ml-2 text-2xl">
+                {
+                  creatorData.reputation_points > 0 ? (
+                    "⭐".repeat(creatorData.reputation_points) // Render stars based on reputation score
+                  ) : (
+                    <span className="text-red-500 text-xl ">User Banned</span>
+                  ) // Show 'User Banned' if score is 0
+                }
+              </span>
+            </h1>
 
-        <h1 className="text-xl font-bold shadow-md">
-          <span className="text-white">Balance:</span>{" "}
-          <span className="ml-2 text-green-500">
-            {creatorData.balance / 1e8} APT
-          </span>
-        </h1>
-      </div>
+            <h1 className="text-xl font-bold shadow-md">
+              <span className="text-white">Balance:</span>{" "}
+              <span className="ml-2 text-green-500">
+                {creatorData.balance / 1e8} APT
+              </span>
+            </h1>
+          </div>
 
-      <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-neutral-900 flex justify-center items-center flex-col gap-2 flex-1 w-full h-full">
-        <div className="flex gap-2 flex-1 justify-center min-h-[500px] w-full max-w-[76%]">
-          <div className="h-full w-3/4 rounded-lg p-4 flex justify-center items-center mt-10 flex-col">
-            <div className="w-full ml-8 -mt-15 mb-5 text-4xl">
-              <h1>Tasks</h1>
-            </div>
+          <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-neutral-900 flex justify-center items-center flex-col gap-2 flex-1 w-full h-full">
+            <div className="flex gap-2 flex-1 justify-center min-h-[500px] w-full max-w-[76%]">
+              <div className="h-full w-3/4 rounded-lg p-4 flex justify-center items-center mt-10 flex-col">
+                <div className="w-full ml-8 -mt-15 mb-5 text-4xl">
+                  <h1>Tasks</h1>
+                </div>
 
-            <Carousel
-              className="w-full max-w-[800px] relative"
-              //  onSlideChange={handleSlideChange}
-              setApi={setApi}
-            >
-              {loading1 &&  <div className="absolute top-0 left-0 h-full w-full border-neutral-700 bg-neutral-800 rounded-2xl flex items-center justify-center" style={{zIndex:100}}>
-                <ReactLoading  type={"spin"} height={67} width={67} />
+                <Carousel
+                  className="w-full max-w-[800px] relative"
+                  //  onSlideChange={handleSlideChange}
+                  setApi={setApi}
+                >
+                  {loading1 && <div className="absolute top-0 left-0 h-full w-full border-neutral-700 bg-neutral-800 rounded-2xl flex items-center justify-center" style={{ zIndex: 100 }}>
+                    <ReactLoading type={"spin"} height={67} width={67} />
 
+                  </div>}
+                  <CarouselContent>
+                    {/* Disclaimer Carousel Item */}
 
-
-</div>}
-              <CarouselContent>
-                {/* Disclaimer Carousel Item */}
-               
-                <CarouselItem>
-                  <div className="p-1">
-                    <Card className="border-none rounded-lg">
-                      <CardContent className="flex h-[400px] items-center justify-center p-6 dark:bg-neutral-800 border-neutral-800 rounded-lg">
-                        <div className="bg-neutral-800 h-[350px] w-full p-4 rounded-lg overflow-auto flex flex-col items-center justify-center">
-                          <h2 className="text-white text-2xl mb-4">
-                            Important Notice
-                          </h2>
-                          <p className="text-gray-400 mb-4 text-center">
-                            Please answer the questions with utmost honesty.
-                            Some questions have predetermined answers, and
-                            failing to answer them correctly will affect your
-                            reputation points. If you provide three incorrect
-                            answers, your account may be banned. If you have any
-                            balance in your account, you might lose that money.
-                            Take your time and answer carefully.
-                          </p>
-                          <p className="text-yellow-500 font-semibold">
-                            Thank you for your understanding!
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </CarouselItem>
-
-                {/* {console.log(questions
-                  .filter(
-                    (e) =>
-                      !e?.pickedBy?.includes(account?.address) &&
-                      !e?.isCompleted
-                  ), "questions")} */}
-                {/* {console.log(currentAddress, "currentAddress")} */}
-
-                {/* Questions Carousel Items */}
-                {questions
-                  .filter(
-                    (e) =>
-                      !e?.pickedBy?.includes(account?.address) &&
-                      !e?.isCompleted
-                  )
-                  .map((questionObj, questionIndex: number) => (
-                    <CarouselItem key={questionIndex}>
+                    <CarouselItem>
                       <div className="p-1">
                         <Card className="border-none rounded-lg">
                           <CardContent className="flex h-[400px] items-center justify-center p-6 dark:bg-neutral-800 border-neutral-800 rounded-lg">
-                            <div className="bg-neutral-800 h-[350px] w-full p-4 rounded-lg overflow-auto relative">
-                              {/* Question Display */}
-                              <div className="my-6">
-                                <label className="text-white mb-4 block text-lg font-semibold">
-                                  {/* {JSON.stringify(questionObj.isCompleted)} */}
-                                  {String(questionObj?.isCompleted)}
-                                  {String(
-                                    questionObj?.pickedBy?.includes(
-                                      account?.address
-                                    )
-                                  )}
-                                  Q{questionIndex + 1}:{" "}
-                                  {questionObj.question.question}
-                                </label>
-
-                                {/* If there is an image URL, display it */}
-                                {questionObj.question.url &&
-                                  (questionObj.type === "image-text" ||
-                                    questionObj.type === "image-image") && (
-                                    <img
-                                      src={questionObj.question.url}
-                                      alt={`Question ${questionIndex + 1}`}
-                                      className="w-[120px] h-[120px] object-cover mb-4 rounded-lg"
-                                    />
-                                  )}
-
-                                {/* Answer Options (text or image) */}
-                                <div className="grid grid-cols-2 gap-4">
-                                  {questionObj.options.map(
-                                    (option, optionIndex: number) => (
-                                      <div
-                                        key={optionIndex}
-                                        className={`border-2 rounded-lg flex items-center justify-between p-4 cursor-pointer overflow-auto ${
-                                          selectedAnswers[
-                                            questionIndex
-                                          ]?.includes(option)
-                                            ? "border-green-700 bg-green-600"
-                                            : "border-gray-600 bg-neutral-900"
-                                        }`}
-                                        onClick={() =>
-                                          handleAnswerChange(
-                                            questionIndex,
-                                            option
-                                          )
-                                        }
-                                      >
-                                        <label className="text-white flex items-center cursor-pointer">
-                                          <input
-                                            type="checkbox"
-                                            checked={selectedAnswers[
-                                              questionIndex
-                                            ]?.includes(option)}
-                                            onChange={() =>
-                                              handleAnswerChange(
-                                                questionIndex,
-                                                option
-                                              )
-                                            }
-                                            className="mr-4 hidden"
-                                          />
-                                          {questionObj?.type === "image-image" ||
-                                          questionObj?.type === "text-image" ? (
-                                            <img
-                                              src={option}
-                                              alt={`Option ${optionIndex + 1}`}
-                                              className="w-[150px] h-[150px] object-cover"
-                                            />
-                                          ) : (
-                                            <span>{option}</span>
-                                          )}
-                                        </label>
-                                      </div>
-                                    )
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Submit Task Button on bottom-right */}
-                              <div className="flex justify-end">
-                                {!submittedQuestions[questionIndex] && (
-                                  <button
-                                    className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                                    onClick={() =>
-                                      handleSubmit(
-                                        questionIndex,
-                                        questionObj.jobid,
-                                        questionObj.taskid
-                                      )
-                                    }
-                                  >
-                                    Submit Task
-                                  </button>
-                                )}
-
-                                {submittedQuestions[questionIndex] && (
-                                  <div className="text-green-500 font-semibold">
-                                    Task Submitted
-                                  </div>
-                                )}
-                              </div>
+                            <div className="bg-neutral-800 h-[350px] w-full p-4 rounded-lg overflow-auto flex flex-col items-center justify-center">
+                              <h2 className="text-white text-2xl mb-4">
+                                Important Notice
+                              </h2>
+                              <p className="text-gray-400 mb-4 text-center">
+                                Please answer the questions with utmost honesty.
+                                Some questions have predetermined answers, and
+                                failing to answer them correctly will affect your
+                                reputation points. If you provide three incorrect
+                                answers, your account may be banned. If you have any
+                                balance in your account, you might lose that money.
+                                Take your time and answer carefully.
+                              </p>
+                              <p className="text-yellow-500 font-semibold">
+                                Thank you for your understanding!
+                              </p>
                             </div>
                           </CardContent>
                         </Card>
                       </div>
                     </CarouselItem>
-                  ))}
 
-                {/* Extra CarouselItem for Task End Message */}
-                <CarouselItem>
-                  <div className="p-1">
-                    <Card className="border-none">
-                      <CardContent className="flex h-[400px] items-center justify-center p-6 dark:bg-neutral-800 border-none rounded-lg">
-                        {!loading1 ? (
-                          <div className="bg-neutral-800 h-[350px] w-full p-4 rounded-lg overflow-auto flex flex-col items-center justify-center">
-                            <h2 className="text-white text-2xl mb-4">
-                              Task Ended
-                            </h2>
-                            <p className="text-gray-400 mb-6 text-center">
-                              You have completed all tasks. Please refresh the
-                              page to check for new tasks or updates.
-                            </p>
-                            <button
-                              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                              onClick={() => {
-                                handleRefresh()
-                              }}
-                            >
-                              Refresh
-                            </button>
+                    {/* {console.log(questions
+                  .filter(
+                    (e) =>
+                      !e?.pickedBy?.includes(account?.address) &&
+                      !e?.isCompleted
+                  ), "questions")} */}
+                    {/* {console.log(currentAddress, "currentAddress")} */}
+
+                    {/* Questions Carousel Items */}
+                    {questions
+                      .filter(
+                        (e) =>
+                          !e?.pickedBy?.includes(account?.address) &&
+                          !e?.isCompleted
+                      )
+                      .map((questionObj, questionIndex: number) => (
+                        <CarouselItem key={questionIndex}>
+                          <div className="p-1">
+                            <Card className="border-none rounded-lg">
+                              <CardContent className="flex h-[400px] items-center justify-center p-6 dark:bg-neutral-800 border-neutral-800 rounded-lg">
+                                <div className="bg-neutral-800 h-[350px] w-full p-4 rounded-lg overflow-auto relative">
+                                  {/* Question Display */}
+                                  <div className="my-6">
+                                    <label className="text-white mb-4 block text-lg font-semibold">
+                                      {/* {JSON.stringify(questionObj.isCompleted)} */}
+                                      {/* {String(questionObj?.isCompleted)}
+                                      {String(
+                                        questionObj?.pickedBy?.includes(
+                                          account?.address
+                                        )
+                                      )} */}
+                                      Q{questionIndex + 1}:{" "}
+                                      {questionObj.question.question}
+                                    </label>
+
+                                    {/* If there is an image URL, display it */}
+                                    {questionObj.question.url &&
+                                      (questionObj.type === "image-text" ||
+                                        questionObj.type === "image-image") && (
+                                        <img
+                                          src={questionObj.question.url}
+                                          alt={`Question ${questionIndex + 1}`}
+                                          className="w-[120px] h-[120px] object-cover mb-4 rounded-lg"
+                                        />
+                                      )}
+
+                                    {/* Answer Options (text or image) */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                      {questionObj.options.map(
+                                        (option, optionIndex: number) => (
+                                          <div
+                                            key={optionIndex}
+                                            className={`border-2 rounded-lg flex items-center justify-between p-4 cursor-pointer overflow-auto ${selectedAnswers[
+                                                questionIndex
+                                              ]?.includes(option)
+                                                ? "border-green-700 bg-green-600"
+                                                : "border-gray-600 bg-neutral-900"
+                                              }`}
+                                            onClick={() =>
+                                              handleAnswerChange(
+                                                questionIndex,
+                                                option
+                                              )
+                                            }
+                                          >
+                                            <label className="text-white flex items-center cursor-pointer">
+                                              <input
+                                                type="checkbox"
+                                                checked={selectedAnswers[
+                                                  questionIndex
+                                                ]?.includes(option)}
+                                                onChange={() =>
+                                                  handleAnswerChange(
+                                                    questionIndex,
+                                                    option
+                                                  )
+                                                }
+                                                className="mr-4 hidden"
+                                              />
+                                              {questionObj?.type === "image-image" ||
+                                                questionObj?.type === "text-image" ? (
+                                                <img
+                                                  src={option}
+                                                  alt={`Option ${optionIndex + 1}`}
+                                                  className="w-[150px] h-[150px] object-cover"
+                                                />
+                                              ) : (
+                                                <span>{option}</span>
+                                              )}
+                                            </label>
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Submit Task Button on bottom-right */}
+                                  <div className="flex justify-end">
+                                    {!submittedQuestions[questionIndex] && (
+                                      <button
+                                        className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                                        onClick={() =>
+                                          handleSubmit(
+                                            questionIndex,
+                                            questionObj.jobid,
+                                            questionObj.taskid
+                                          )
+                                        }
+                                      >
+                                        Submit Task
+                                      </button>
+                                    )}
+
+                                    {submittedQuestions[questionIndex] && (
+                                      <div className="text-green-500 font-semibold">
+                                        Task Submitted
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
                           </div>
-                        ) : (
-                          <div className="flex flex-col items-center justify-center h-full">
-                             <ReactLoading  type={"spin"} height={67} width={67} />
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </div>
-                </CarouselItem>
-              </CarouselContent>
-             {!loading1 && <>
-              <CarouselPrevious />
-              <CarouselNext />
-             </>}
-            </Carousel>
+                        </CarouselItem>
+                      ))}
+
+                    {/* Extra CarouselItem for Task End Message */}
+                    <CarouselItem>
+                      <div className="p-1">
+                        <Card className="border-none">
+                          <CardContent className="flex h-[400px] items-center justify-center p-6 dark:bg-neutral-800 border-none rounded-lg">
+                            {!loading1 ? (
+                              <div className="bg-neutral-800 h-[350px] w-full p-4 rounded-lg overflow-auto flex flex-col items-center justify-center">
+                                <h2 className="text-white text-2xl mb-4">
+                                  Task Ended
+                                </h2>
+                                <p className="text-gray-400 mb-6 text-center">
+                                  You have completed all tasks. Please refresh the
+                                  page to check for new tasks or updates.
+                                </p>
+                                <button
+                                  className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                                  onClick={() => {
+                                    handleRefresh()
+                                  }}
+                                >
+                                  Refresh
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center h-full">
+                                <ReactLoading type={"spin"} height={67} width={67} />
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </CarouselItem>
+                  </CarouselContent>
+                  {!loading1 && <>
+                    <CarouselPrevious />
+                    <CarouselNext />
+                  </>}
+                </Carousel>
 
 
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
+      );
 };
 
 export default Dashboard;
