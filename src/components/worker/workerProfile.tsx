@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState, useRef } from "react";
-import { Sidebar, SidebarBody, SidebarLink } from "../ui/sidebar";
+import { Sidebar, SidebarBody, SidebarLink } from "../components/ui/sidebar";
 import {
   IconArrowLeft,
   IconBrandTabler,
@@ -95,6 +95,12 @@ const Dashboard = () => {
     if (!account) return [];
     setLoadingJob(true);
 
+    console.log(
+      currentJobIndexRef.current,
+      Number(maxJobsRef.current),
+      "Number equal"
+    );
+
     try {
       const jobResource = await client.getAccountResource(
         "0x1dc03758f2c3a17cec451cfef4b7f50fd530c10400731aa2c22abcde7b678bd6",
@@ -108,6 +114,7 @@ const Dashboard = () => {
         setJobs([]);
         return;
       }
+      console.log("first", currIdxRef.current);
       let totalFetchedTasks = 0;
       let allJobs = [];
       maxJobsRef.current = jobCounter;
@@ -134,12 +141,12 @@ const Dashboard = () => {
       } else if (direction === "previous") {
         // Ensure we don't go below the first index
         const newIdx = currIdxRef.current > 0 ? currIdxRef.current - 1 : 0;
-        setCompletedTasks(prevState[newIdx]); // Fetch the previous state
         currIdxRef.current = newIdx; // Update the current index
+        setCompletedTasks(prevState[newIdx]); // Fetch the previous state
         setLoadingJob(false);
         console.log(
           "previous",
-          currIdxRef.current,
+          currIdxRef.current, maxJobsRef.current,
           prevState[currIdxRef.current]
         );
         return;
@@ -209,12 +216,12 @@ const Dashboard = () => {
 
       // If there are filtered tasks, append the fetched jobs
       if (ans.length > 0) {
+        setCompletedTasks(ans);
         // Use function form of setState to ensure latest prevState is used
         setPrevState((prev) => [...prevState, ans]);
         currIdxRef.current = prevState.length;
-        setCompletedTasks(ans);
+        console.log("next", currIdxRef.current);
       }
-      console.log("next", currIdxRef.current, prevState.length);
 
       console.log(ans, "ans");
       setJobs((prev) => [...prev, allJobs]);
@@ -286,11 +293,6 @@ const Dashboard = () => {
     }
   };
   useEffect(() => {
-    currentJobIndexRef.current = 0;
-    currentTaskIndexRef.current = 0;
-    setCompletedTasks([]);
-    setPrevState([]);
-    currIdxRef.current = -1;
     if (connected) {
       getUserProfile(account?.address).then((res) => {
         console.log(res);
@@ -298,7 +300,7 @@ const Dashboard = () => {
         if (res === null) handleOpen();
       });
     }
-    getJobs("next");
+    if (jobs.length === 0) getJobs("next");
   }, [account, open]);
 
   useEffect(() => {
@@ -334,7 +336,7 @@ const Dashboard = () => {
           <div className="w-full flex my-5 gap-10 justify-around items-center">
             <button
               className="p-3 w-[50px] h-[50px] transition duration-900 bg-gradient-to-r from-gray-900 to-gray-600 text-white rounded-full shadow-md hover:from-blue-500 hover:to-blue-700 transition-all"
-              disabled={loadingJob || currIdxRef.current <= 0}
+              disabled={currIdxRef.current === 0}
               onClick={() => getJobs("previous")}
             >
               previous
@@ -342,7 +344,6 @@ const Dashboard = () => {
             <button
               className="p-3 w-[50px] h-[50px] transition duration-900 bg-gradient-to-r from-gray-900 to-gray-600 text-white rounded-full shadow-md hover:from-blue-500 hover:to-blue-700 transition-all"
               disabled={
-                loadingJob || 
                 currentJobIndexRef.current == Number(maxJobsRef.current)
               }
               onClick={() => getJobs("next")}
@@ -509,15 +510,15 @@ const Dashboard = () => {
         <div className="w-full flex my-5 gap-10 justify-around items-center">
           <button
             className="p-3 w-[50px] h-[50px] transition duration-900 bg-gradient-to-r from-gray-900 to-gray-600 text-white rounded-full shadow-md hover:from-blue-500 hover:to-blue-700 transition-all"
-            disabled={loadingJob || currIdxRef.current <= 0}
+            disabled={loadingJob || currIdxRef.current === 0}
             onClick={() => getJobs("previous")}
           >
             <FontAwesomeIcon icon={faArrowLeft} /> 
           </button>
-          <strong>Page: {currIdxRef.current > -1 ? currIdxRef.current + 1 : 0}</strong>
+          <strong>Page: {currIdxRef.current >= 0 ? currIdxRef.current + 1 : 0}</strong>
           <button
             className="p-3 w-[50px] h-[50px] transition duration-900 bg-gradient-to-r from-gray-900 to-gray-600 text-white rounded-full shadow-md hover:from-blue-500 hover:to-blue-700 transition-all"
-            disabled={loadingJob || currentJobIndexRef.current === Number(maxJobsRef.current)}
+            disabled={loadingJob || currIdxRef.current === prevState.length}
             onClick={() => getJobs("next")}
           >
             <FontAwesomeIcon icon={faArrowRight} /> 

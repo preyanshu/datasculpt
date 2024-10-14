@@ -98,7 +98,7 @@ export const products = [
     title: "Tasks for workers",
     link: "#",
     thumbnail:
-      "/assets/pic2.png",
+      "/assets/pic3.png",
   },
   {
     title: "Worker Profile",
@@ -129,13 +129,13 @@ export const products = [
     title: "User registry",
     link: "#",
     thumbnail:
-      "/assets/pic7.png",
+      "/assets/Screenshot 2024-10-14 150349.png",
   },
   {
     title: "Upload csv containing tasks",
     link: "#",
     thumbnail:
-      "/assets/pic8.png",
+      "/assets/Screenshot 2024-10-14 143921.png",
   },
 
   {
