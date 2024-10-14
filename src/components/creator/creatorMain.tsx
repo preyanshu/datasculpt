@@ -1,24 +1,24 @@
 'use client'
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // Import useRouter from Next.js
-import { FloatingDockDemo } from "./floating-dock";
-import { FileUploadDemo } from "./file-upload";
-import { AnimatedModalDemo } from "./modal";
-import { TaskExtracted } from "./taskExtracted";
-import QuestionVerification from "./QuestionVerification";
+import { FloatingDockDemo } from "../floating-dock";
+import { FileUploadDemo } from "../fileUpload";
+import { AnimatedModalDemo } from "../orderModal";
+import { TaskExtracted } from "../taskExtracted";
+import QuestionVerification from "../questionVerification";
 import Papa from "papaparse";
-import { useCreatorData } from "@/context/creatorContext";
+import { useCreatorData } from "@/context/context";
 import { useWallet, InputTransactionData } from "@aptos-labs/wallet-adapter-react";
-import Register from "./Register";
+import Register from "../register";
 import { AptosClient } from "aptos";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import ReactLoading from "react-loading";
 import { error } from "console";
 import { data, map, filter, header } from "framer-motion/client";
 import { url } from "inspector";
 import { parse } from "path";
-import RoleSwitcher from "./RoleSwitcher";
+import RoleSwitcher from "../roleSwitcher";
 import config from "@/context/config"
 
 const NODE_URL = config.NODE_URL;

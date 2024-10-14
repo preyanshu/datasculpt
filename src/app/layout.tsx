@@ -1,13 +1,13 @@
 "use client"
 import localFont from "next/font/local";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import { WalletProvider } from "@/components/WalletProvider";
+import { ThemeProvider } from "@/components/themeProvider";
+import { WalletProvider } from "@/components/walletProvider";
 import { Toaster } from "@/components/ui/toaster";
 import { ModalProvider } from "@/components/ui/animated-modal";
 import router, { usePathname } from 'next/navigation';
 import style from "styled-jsx/style";
-import { CreatorProvider } from "@/context/creatorContext";
+import { CreatorProvider } from "@/context/context";
 import NextNProgress from 'nextjs-progressbar';
 import { link } from "fs";
 

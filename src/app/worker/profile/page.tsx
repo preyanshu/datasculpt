@@ -1,4 +1,4 @@
-import  Dashboard from "@/components/workerProfile";
+import  Dashboard from "@/components/worker/workerProfile";
 
 export default function Home() {
   return (

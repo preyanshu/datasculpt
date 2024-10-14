@@ -6,7 +6,7 @@ import {
   ModalContent,
   ModalFooter,
   ModalTrigger,
-} from "../components/ui/animated-modal";
+} from "./ui/animated-modal";
 import {
   useWallet,
   InputTransactionData,

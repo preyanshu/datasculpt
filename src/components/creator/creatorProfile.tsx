@@ -3,20 +3,20 @@
 import React, { useEffect, useState, useRef, createElement } from "react";
 import Image from "next/image";
 import { Tabs } from "@/components/ui/tabs";
-import ExpandableCard from "./blocks/expandable-card-demo-standard";
-import { useCreatorData } from "@/context/creatorContext";
+import ExpandableCard from "../blocks/expandable-card-creator";
+import { useCreatorData } from "@/context/context";
 import { AptosClient } from "aptos";
 import {
   useWallet,
   InputTransactionData,
 } from "@aptos-labs/wallet-adapter-react";
-import Register from "./Register";
-import { Button } from "./ui/button";
+import Register from "../register";
+import { Button } from "../ui/button";
 import ReactLoading from "react-loading";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
-import RoleSwitcher from "./RoleSwitcher";
+import RoleSwitcher from "../roleSwitcher";
 import config from "@/context/config"
 import { log } from "console";
 import { address } from "framer-motion/client";

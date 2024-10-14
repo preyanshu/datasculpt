@@ -10,8 +10,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
 // import { CreatorProvider } from "@/context/creatorContext";
-import Header from "@/components/Header";
-import { useCreatorData } from "@/context/creatorContext";
+import Header from "@/components/header";
+import { useCreatorData } from "@/context/context";
 
 const links = [
   {

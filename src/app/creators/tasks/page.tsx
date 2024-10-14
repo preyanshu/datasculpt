@@ -1,4 +1,4 @@
-import Dashboard from "@/components/main";
+import Dashboard from "@/components/creator/creatorMain";
 
 export default function HomePage() {
   return <Dashboard />;

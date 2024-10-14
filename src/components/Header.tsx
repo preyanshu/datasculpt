@@ -1,7 +1,7 @@
 "use-client";
 
 import React from 'react'
-import { WalletSelector } from './WalletSelector';
+import { WalletSelector } from './walletSelector';
 
 const Header = () => {
   return (

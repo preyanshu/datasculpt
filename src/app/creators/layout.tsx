@@ -11,14 +11,14 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/themeProvider";
 import "../globals.css";
 import localFont from "next/font/local";
 import type { Metadata } from "next";
-import { CreatorProvider } from "@/context/creatorContext";
-import Header from "@/components/Header";
+import { CreatorProvider } from "@/context/context";
+import Header from "@/components/header";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
-import { useCreatorData } from "@/context/creatorContext";
+import { useCreatorData } from "@/context/context";
 
 const geistSans = localFont({
   src: "../fonts/GeistVF.woff",

@@ -9,19 +9,19 @@ import {
   CarouselPrevious,
   type CarouselApi,
 } from "@/components/ui/carousel";
-import { useCreatorData } from "@/context/creatorContext";
+import { useCreatorData } from "@/context/context";
 import { AptosClient } from "aptos";
 import {
   useWallet,
   InputTransactionData,
 } from "@aptos-labs/wallet-adapter-react";
-import Register from "./Register";
-import { useToast } from "./ui/use-toast";
+import Register from "../register";
+import { useToast } from "../ui/use-toast";
 import { useRouter } from "next/navigation";
 import ReactLoading from 'react-loading';
 import { color } from "framer-motion";
 import { type } from "os";
-import RoleSwitcher from "./RoleSwitcher";
+import RoleSwitcher from "../roleSwitcher";
 import config from "@/context/config"
 
 const NODE_URL = config.NODE_URL;

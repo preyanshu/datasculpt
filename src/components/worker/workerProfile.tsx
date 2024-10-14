@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState, useRef } from "react";
-import { Sidebar, SidebarBody, SidebarLink } from "../components/ui/sidebar";
+import { Sidebar, SidebarBody, SidebarLink } from "../ui/sidebar";
 import {
   IconArrowLeft,
   IconBrandTabler,
@@ -12,25 +12,25 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Tabs } from "@/components/ui/tabs";
-import ExpandableCard from "./blocks/expandable-card-worker";
-import { useCreatorData } from "@/context/creatorContext";
+import ExpandableCard from "../blocks/expandable-card-worker";
+import { useCreatorData } from "@/context/context";
 import { AptosClient } from "aptos";
 import {
   useWallet,
   InputTransactionData,
 } from "@aptos-labs/wallet-adapter-react";
-import Register from "./Register";
-import { Button } from "./ui/button";
-import Withdraw from "./Wthdraw";
+import Register from "../register";
+import { Button } from "../ui/button";
+import Withdraw from "../wthdraw";
 import { toast } from "react-toastify";
-import { useToast } from "./ui/use-toast";
+import { useToast } from "../ui/use-toast";
 import { address, data, filter, map } from "framer-motion/client";
 import { title } from "process";
-import { description } from "./taskExtracted";
+import { description } from "../taskExtracted";
 import { log } from "console";
 import { useRouter } from "next/navigation";
 import ReactLoading from "react-loading";
-import RoleSwitcher from "./RoleSwitcher";
+import RoleSwitcher from "../roleSwitcher";
 import config from "@/context/config";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";

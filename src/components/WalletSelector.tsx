@@ -43,7 +43,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
-import { useCreatorData } from "@/context/creatorContext";
+import { useCreatorData } from "@/context/context";
 
 export function WalletSelector(walletSortingOptions: WalletSortingOptions) {
   const { account, connected, disconnect, wallet } = useWallet();
