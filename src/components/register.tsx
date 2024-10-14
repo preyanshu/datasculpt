@@ -59,7 +59,7 @@ const Register: React.FC<RegisterWorkerProps> = ({ open, setOpen, user }) => {
       console.log(error);
       toast({variant: "destructive",
         title: "Error",
-        description: "Error registering user"});
+        description: error ? "" + error :  "There may be some issues with wallet connection, please reload/reconnect your wallet properly the page and try again"});
     }
   };
 

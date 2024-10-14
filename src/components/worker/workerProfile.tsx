@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { Tabs } from "@/components/ui/tabs";
 import ExpandableCard from "../blocks/expandable-card-worker";
 import { useCreatorData } from "@/context/context";
-import { AptosClient } from "aptos";
+import { AptosClient, HexString } from "aptos";
 import {
   useWallet,
   InputTransactionData,
@@ -196,9 +196,9 @@ const Dashboard = () => {
           tasks: tasks,
           amount: job.amount,
         });
-
+        
         // Filter tasks based on the condition
-        ans = convertTaskData(allJobs, account?.address);
+        ans = convertTaskData(allJobs, HexString.ensure(account?.address).toShortString());
 
         // If no valid tasks found, fetch from the next job
         taskIndex += tasksToFetch;
@@ -265,7 +265,7 @@ const Dashboard = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Withdrawal Failed",
+        description: error ? "" + error :  "There may be some issues with wallet connection, please reload/reconnect your wallet properly the page and try again",
       });
     }
   };
@@ -510,7 +510,7 @@ const Dashboard = () => {
         <div className="w-full flex my-5 gap-10 justify-around items-center">
           <button
             className="p-3 w-[50px] h-[50px] transition duration-900 bg-gradient-to-r from-gray-900 to-gray-600 text-white rounded-full shadow-md hover:from-blue-500 hover:to-blue-700 transition-all"
-            disabled={loadingJob || currIdxRef.current === 0}
+            disabled={loadingJob || currIdxRef.current <= 0}
             onClick={() => getJobs("previous")}
           >
             <FontAwesomeIcon icon={faArrowLeft} /> 

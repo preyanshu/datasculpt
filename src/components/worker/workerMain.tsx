@@ -10,7 +10,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { useCreatorData } from "@/context/context";
-import { AptosClient } from "aptos";
+import { AptosClient, HexString } from "aptos";
 import {
   useWallet,
   InputTransactionData,
@@ -34,7 +34,7 @@ const convertStructure = (oldData, account) => {
 
   const newData = oldData.flatMap((job) =>
     job.tasks
-      .filter((task) => !task?.picked_by?.includes(account?.address) && !task.completed)
+      .filter((task) => !task?.picked_by?.includes(HexString.ensure(account?.address).toShortString()) && !task.completed)
       .map((task) => {
         const { question, options, task_id, url, picked_by } = task;
         const isImageType =
@@ -386,7 +386,7 @@ const Dashboard = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to complete the task",
+        description: error ? "" +error :  "There may be some issues with wallet connection, please reload/reconnect your wallet properly the page and try again",
       });
       console.log(error);
     }
