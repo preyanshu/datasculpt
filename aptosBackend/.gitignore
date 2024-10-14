@@ -1,0 +1,5 @@
+# Aptos Move specific files
+**/build/
+**/Move.toml.lock
+**/target/
+.aptos
