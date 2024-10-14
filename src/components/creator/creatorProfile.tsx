@@ -78,7 +78,7 @@ const Dashboard = () => {
   const [loadingAns, setLoadingAns] = useState(false);
   // const [questions, setQuestions] = useState([]);
 
-  const getAnswers = async (jobId: number) => {
+  const getAnswers = async (jobId: number,type:string) => {
     if (!account || !jobId) return [];
     setLoadingAns(true);
 
@@ -146,7 +146,7 @@ const Dashboard = () => {
     }
   };
 
-  const downloadTasksAsCSV = (tasks: any) => {
+  const downloadTasksAsCSV = (tasks: any,type:string) => {
     // Find the maximum number of options across all tasks
     const maxOptions = tasks.reduce(
       (max, task) => Math.max(max, task.options.length),
@@ -155,9 +155,19 @@ const Dashboard = () => {
 
     // Generate CSV Header
     const headers = ["task_id", "question"];
-    for (let i = 1; i <= maxOptions; i++) {
+
+    if(type==="image-text"|| type==="image-image"){
+      headers.push("question URL");
+       for (let i = 1; i <= maxOptions-1; i++) {
+      headers.push(`option ${i}`);}
+    }else{
+
+      for (let i = 1; i <= maxOptions; i++) {
       headers.push(`option ${i}`);
     }
+    }
+      
+    
     headers.push("answer");
 
     // Function to find the most frequent answer in the task_answers array
