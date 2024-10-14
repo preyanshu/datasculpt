@@ -1,6 +1,4 @@
 const CONFIG = {
-    MODULE_ADDRESS: "0x8503e977d16f320c0d89ce80428c678946db1f1d172945bdeb8a050dd9d3778f", // Replace with your module address
-    NODE_URL: "https://fullnode.devnet.aptoslabs.com", 
-  };
-  
+    MODULE_ADDRESS: "0x71be0e1248f94c261bce70c8202ad89d95ef7429837956eb48a0ef9f1c21e662", 
+  };  
   export default CONFIG;
