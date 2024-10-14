@@ -798,7 +798,7 @@ const Dashboard = () => {
               </ul>
             ) : (
               <p className="text-neutral-600 dark:text-neutral-300">
-                No pending jobs found.
+                No completed jobs found.
               </p>
             )}
           </div>
