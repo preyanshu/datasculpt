@@ -89,60 +89,60 @@ export default HeroParallaxDemo;
 export const products = [
 
   {
-    title: "Editorially",
+    title: "Creator profile",
     link: "#",
     thumbnail:
-      "https://aceternity.com/images/products/thumbnails/new/editorially.png",
+      "/assets/pic4.png",
   },
   {
-    title: "Editrix AI",
+    title: "Tasks for workers",
     link: "#",
     thumbnail:
-      "https://aceternity.com/images/products/thumbnails/new/editrix.png",
+      "/assets/pic2.png",
   },
   {
-    title: "Pixel Perfect",
+    title: "Worker Profile",
     link: "#",
     thumbnail:
-      "https://aceternity.com/images/products/thumbnails/new/pixelperfect.png",
+      "/assets/pic6.png",
   },
 
   {
     title: "Algochurn",
     link: "#",
     thumbnail:
-      "https://aceternity.com/images/products/thumbnails/new/algochurn.png",
+      "/assets/pic4.png",
   },
   {
     title: "Aceternity UI",
     link: "#",
     thumbnail:
-      "https://aceternity.com/images/products/thumbnails/new/aceternityui.png",
+      "/assets/pic5.png",
   },
   {
     title: "Tailwind Master Kit",
     link: "#",
     thumbnail:
-      "https://aceternity.com/images/products/thumbnails/new/tailwindmasterkit.png",
+      "/assets/pic6.png",
   },
   {
-    title: "SmartBridge",
+    title: "User registry",
     link: "#",
     thumbnail:
-      "https://aceternity.com/images/products/thumbnails/new/smartbridge.png",
+      "/assets/pic7.png",
   },
   {
-    title: "Renderwork Studio",
+    title: "Upload csv containing tasks",
     link: "#",
     thumbnail:
-      "https://aceternity.com/images/products/thumbnails/new/renderwork.png",
+      "/assets/pic8.png",
   },
 
   {
-    title: "Creme Digital",
+    title: "Job creation analysis for creator",
     link: "#",
     thumbnail:
-      "https://aceternity.com/images/products/thumbnails/new/cremedigital.png",
+      "/assets/pic9.png",
   }
 
 ];

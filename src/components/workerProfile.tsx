@@ -485,7 +485,7 @@ const Dashboard = () => {
             className={`rounded-lg flex justify-center items-center px-4 py-2 cursor-pointer bg-[#27272A] text-white transition duration-200`}
             style={{ borderRadius: "30px" }}
           >
-            Pending Jobs
+            Completed Tasks
           </div>
         </div>
         {/* <Tabs tabs={tabs} /> */}
