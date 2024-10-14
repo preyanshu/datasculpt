@@ -1,4 +1,3 @@
-
 # DataSculpt
 
 ![pixelcut-export (1).png](https://cdn.dorahacks.io/static/files/1928a875de8f9ac54e7e93b4728b0dab.png)
@@ -12,15 +11,15 @@ This platform enables users to create customizable tasks for contributors while 
 
 ### Demo Video
 
-[Click here to watch the demo video](https://www.youtube.com/watch?v=uaWmvn0nZr4)
+[Click here to watch the demo video](https://youtu.be/f_S0T38ucyU)
 
 ### Live Link
 
-[Explore DataScult here](https://dscvr.one/post/1201336802623881354)
+[Explore DataScult here](https://datasculpt.vercel.app)
 
 ### Github Link
 
-[Explore the Github Repo here](https://github.com/preyanshu/TrophyMint)
+[Explore the Github Repo here](https://github.com/preyanshu/datasculpt)
 
 ## Working
 
@@ -113,8 +112,3 @@ DataSculpt leverages modern technologies to provide a seamless experience for us
 -   **Frontend:** Built with Next.js for a fast, dynamic user interface, styled with Tailwind CSS for responsive design, and enhanced with Framer Motion for smooth animations and interactions.
 -   **Blockchain:** Aptos blockchain to securely handle task assignments and automate payments.
 -   **Smart Contracts:** Written in Move, the smart contracts manage job creation, task validation, payment distribution, and reputation tracking.
-
-
-
-
-
