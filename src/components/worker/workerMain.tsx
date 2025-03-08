@@ -122,6 +122,13 @@ const Dashboard = () => {
   const currentTaskIndexRef = useRef(0);
   let allBatchesEmpty = true;
 
+  const shuffleArray = (array: any[]) => {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  };
+
   // Main function to fetch jobs and tasks
   const getJobs = async (taskBatchSize = 10) => {
     if (!account) return [];
@@ -235,7 +242,21 @@ const Dashboard = () => {
       }
 
       if (ans.length > 0) {
-        setQuestions((prev) => [...ans]);
+        // **Split jobs into two halves**
+        const mid = Math.floor(ans.length / 2);
+        let firstHalf = ans.slice(0, mid);
+        let secondHalf = ans.slice(mid);
+
+        // **Shuffle each half**
+        shuffleArray(firstHalf);
+        shuffleArray(secondHalf);
+
+        // **Alternate Between First and Second Half**
+        const shouldServeFirstHalf = Math.random() > 0.5; // Randomly decide which half to serve
+        const finalJobs = shouldServeFirstHalf ? firstHalf : secondHalf;
+
+        console.log(finalJobs, "finaljobs");
+        setQuestions((prev) => [...finalJobs]);
         setJobs((prevJobs: Array<any>) => allJobs);
       }
       else {
@@ -545,7 +566,7 @@ const Dashboard = () => {
                               <CardContent className="flex h-[400px] items-center justify-center p-6 dark:bg-neutral-800 border-neutral-800 rounded-lg">
                                 <div className="bg-neutral-800 h-[350px] w-full p-4 rounded-lg overflow-auto relative">
                                   {/* Question Display */}
-                                  <div className="my-6">
+                                  <div className="my-6 select-none">
                                     <label className="text-white mb-4 block text-lg font-semibold">
                                       {/* {JSON.stringify(questionObj.isCompleted)} */}
                                       {/* {String(questionObj?.isCompleted)}
